@@ -123,14 +123,13 @@
 \linenumbers
 
 \begin{abstract}
-Time-series data---data that allows to track how frequency of derived alleles changed through time--is one of the richest sources for inference of directional selection.
-When allele is beneficial it not just starts to increase in frequency in the population, but it also increase the frequency of alleles in nearby loci due to linkage--- the hidgehicking affect.
-However, most existing looks for selection inference are single-locus methods that treat loci as independent ignoring linkage information.
-They infer site-specific selection coefficient in isolation and then use various window based statistics downstream to account for hidgehicking affect.
-We present a new tool \SweepLink --- a two-layer HMM that capture the selection landscape together with the linkage.
-We show that \SweepLink has higher power to detect weak and moderate selection and the same power to detect high selection.
-Finally, we used \SweepLink to perform genome-wide selection scan for British population from data that was previously analysed by single-locus tool \bmws.
-\SweepLink was able to identify the same candidates for selection as in the previous scan (LCT, SLC45A2, DHCR4, HERC2), but was able to identify other regions that are supported by other studies as affected by selection, e.g. DPYD, FADS1/2. 
+Time-series data---allele frequency trajectories tracked across multiple sampling times---are among the richest sources of information for inferring directional selection, since they capture not only how a beneficial allele itself rises in frequency, but also how it drags the frequency of nearby loci upward via linkage---an effect known as genetic hitchhiking.
+Yet most existing selection-inference tools are single-locus methods that treat loci as independent, ignoring this linkage structure: they infer site-specific selection coefficients in isolation and then rely on ad hoc, window-based statistics downstream to account for hitchhiking.
+Many of these tools further require a predefined effective population size, and the few that jointly infer demography and selection do not scale beyond a small, pre-selected set of loci.
+We present \SweepLink, a two-layer Hidden Markov Model that overcomes both limitations, jointly inferring demography and linked selection genome-wide by coupling a spatial layer, which captures correlations between selection coefficients at neighboring loci, with a temporal layer based on a Wright-Fisher diffusion model.
+On simulated data, \SweepLink substantially increases sensitivity to weak and moderate selection while matching existing tools' power to detect strong selection, and its pooled, genome-wide evidence yields sharply peaked posterior probabilities that remove the need for arbitrary significance thresholds.
+We then applied \SweepLink to ancient DNA time-series data from the British population previously analysed with the single-locus tool \bmws.
+\SweepLink recovers three of the previously reported selection signals (LCT, DHCR7, HERC2), does not replicate the previously reported signal at SLC45A2, and identifies additional candidate regions---including DPYD and FADS1/FADS2---that are supported by independent studies.
 \end{abstract}
 
 \section{Introduction}
