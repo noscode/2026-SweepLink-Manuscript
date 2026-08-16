@@ -1,0 +1,1162 @@
+\documentclass{article}
+
+\usepackage{blkarray}% http://ctan.org/pkg/blkarray
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\newcommand{\matindex}[1]{{\scriptstyle#1}}% Matrix index
+
+\def\G{{\cal G}}
+
+\def\mmu{\mbox{\boldmath $\mu$}}
+\def\th{\mbox{\boldmath $\theta$}}
+\def\Sig{\mbox{\boldmath $\Sigma$}}
+\def\bbeta{\mbox{\boldmath $\beta$}}
+
+\def\0{\mbox{\boldmath $0$}}
+\def\x{\mbox{\boldmath $x$}}
+\def\b{\mbox{\boldmath $b$}}
+\def\m{\mbox{\boldmath $m$}}
+\def\y{\mbox{\boldmath $y$}}
+\def\j{\mbox{\boldmath $j$}}
+\def\s{\mbox{\boldmath $s$}}
+\def\a{\mbox{\boldmath $a$}}
+\def\1{\mbox{\boldmath $1$}}
+\def\i{\mbox{\boldmath $i$}}
+
+\def\A{\mbox{\boldmath $A$}}
+\def\B{\mbox{\boldmath $B$}}
+\def\C{\mbox{\boldmath $C$}}
+\def\D{\mbox{\boldmath $D$}}
+\def\I{\mbox{\boldmath $I$}}
+\def\J{\mbox{\boldmath $J$}}
+\def\L{\mbox{\boldmath $L$}}
+\def\N{\mbox{\boldmath $N$}}
+\def\V{\mbox{\boldmath $V$}}
+\def\W{\mbox{\boldmath $W$}}
+\def\X{\mbox{\boldmath $X$}}
+
+\def\calB{{\mathcal B}}
+\def\calL{{\mathcal L}}
+\def\calQ{{\mathcal Q}}
+
+
+\def\tS{\tilde{\S}}
+\def\tmu{\tilde{\mu}}
+\def\td{\tilde{\d}}
+
+\def\P{\mathbb{P}}
+\def\E{\mathbb{E}}
+\def\dd{\mathrm{d}}
+
+% Language setting
+% Replace `english' with e.g. `spanish' to change the document language
+\usepackage[english]{babel}
+
+% Set page size and margins
+% Replace `letterpaper' with`a4paper' for UK/EU standard size
+\usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\usepackage{placeins}
+
+% references
+\usepackage[round]{natbib} % Allows for Author-Year citations
+\bibliographystyle{plainnat} % A style that supports Author-Year
+
+% line number
+\usepackage{lineno}
+
+% table rules
+\usepackage{booktabs}
+\usepackage{longtable}
+
+% --- SUPPLEMENTARY FIGURES ---
+\setcounter{figure}{0}
+\renewcommand{\thefigure}{S\arabic{figure}}
+
+% --- SUPPLEMENTARY TABLES ---
+\setcounter{table}{0}
+\renewcommand{\thetable}{S\arabic{table}}
+
+% --- SUPPLEMENTARY EQUATIONS ---
+\setcounter{equation}{0}
+\renewcommand{\theequation}{S\arabic{equation}}
+
+% tools
+\usepackage{xspace}
+\newcommand{\SweepLink}{\texttt{SweepLink}\xspace}
+\newcommand{\ApproxWF}{\texttt{ApproxWF}\xspace}
+\newcommand{\diplolocus}{\texttt{diplo-locus}\xspace}
+\newcommand{\bmws}{\texttt{bmws}\xspace}
+\newcommand{\CLUES}{\texttt{CLUES2}\xspace}
+\newcommand{\timesweeper}{\texttt{timesweeper}\xspace}
+
+\title{Supplementary Material for \\
+\textit{SweepLink: Joint Inference of Demography and Linked Selection from Time-series Data}}
+\author{Ekaterina Noskova et al.}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+
+\linenumbers
+
+\section{Temporal Layer}
+\subsection{Wright-Fisher Diffusion}
+
+Assume $P$ populations.
+Consider \textbf{a single locus} with two alleles $A$ and $a$, where $a$ is the ancestral allele and $A$ is the derived allele, formed by mutation.
+Mutation acts on individual alleles at rates $\mu_{a \to A}$, from the ancestral allele $a$ to the derived allele $A$, and $\mu_{A \to a}$ for the back mutation.
+Denote $X_p(t) \in [0,1],\ p=1,\ldots,P$ --- the relative frequency of the derived allele $A$ in a population $p$ at generation $t$.
+These frequencies form the random vector $\X(t) = \{X_p(t)\}_{p=1}^P$. 
+According to the Wright-Fisher model $\X(t)$ is a Markov chain with a transition matrix defined by considered evolutionary forces such as population size, migration rate and selection rate.
+
+Assume that each population $p$, $p = 1, \ldots, P$, has an effective population size equal to $2N_p$.
+Migration between populations is described by the rates $0 \leq m_{pq} \leq 1$, where $m_{pq}$ is the migration rate from population $q$ to population $p$, satisfying
+\begin{equation*}
+    \sum_{q=1}^P m_{pq} = 1, \quad m_{pp} = 1 - \sum_{q \neq p} m_{pq}.
+\end{equation*}
+Selection at the given locus within population $q$ is governed by the fitness coefficients:
+\begin{equation*}
+    w_{AA} = 1 + s_q, \quad w_{Aa} = 1 + h s_q, \quad w_{aa} = 1,
+\end{equation*}
+where $s_q$ is the selection coefficient and $h$ the dominance coefficient equal across all populations.
+
+To specify the transition of the Markov chain in the Wright-Fisher model, we calculate $\psi_p$, the probability of drawing a derived allele $A$ for population $p$ in generation $t+1$.
+Given the frequencies $\X(t) = \x$ at generation $t$, this probability is obtained through a three-stage sampling scheme.
+In the first stage, we select a parental population $q$ with probability $m_{pq}$.
+In the second stage, we draw an allele from the chosen population $q$ with a probability weighted by the fitness coefficients.
+Combining these two steps, the mean frequency of $A$ in population $p$ after migration and selection is
+\begin{equation}\label{eq:WF}
+\phi_p(\x) = \sum_{q=1}^P m_{pq} \, \frac{w_{AA}x_q^2 + w_{Aa}x_q(1-x_q)}{w_{AA}x_q^2 + 2w_{Aa}x_q(1-x_q) + w_{aa}(1-x_q)^2}.
+\end{equation}
+In the third stage, we allow the sampled allele to mutate, which yields the final sampling probability
+\begin{equation}\label{eq:mutation}
+\psi_p(\x) = \tilde{x}_p + \mu_{a \to A}(1 - \phi_p(\x)) - \mu_{A \to a}\,\phi_p(\x).
+\end{equation}
+
+The random variable $X_p(t+1)$ is then obtained by binomial sampling of $2N_p$ alleles with success probability $\psi_p$, as is standard in the Wright-Fisher model:
+\begin{equation}\label{eq:sampling}
+X_p(t+1) \ \sim\ \frac{\mathrm{Binomial}\!\left(2N_p,\ \psi_p(\X(t))\right)}{2N_p}.
+\end{equation}
+
+\bigskip
+
+For large $N_p$, the random vector $\X(t)$, which forms a discrete-time Markov chain, can be modeled approximatively as a multivariate diffusion process on the open cube $\calQ=(0,1)^P$.
+One can show (see e.g. \citet[ch. 15.2]{karlin1981}) that the infinitesimal drift vector $\a(\x)$ of the diffusion process is given by
+\begin{equation}
+\label{eq:mean_func}
+a_p(\x) = \psi_p(\x)-x_p
+\end{equation}
+and the infinitesimal covariance matrix $\mathbf{b}(\x)$ by
+\begin{equation}
+\label{eq:cov_func}
+b_{pq}(\x) = \frac{x_p(1-x_p)}{2N_p}\delta_{pq},
+\end{equation}
+where $\delta_{pq}$ is the Kronecker delta. The infinitesimal generator of this process is the second-order linear operator:
+\begin{equation}\label{eq:generator}
+\calL_x \ f(t,\x) = \frac{1}{2}\sum_{p=1}^P b_{pp}(\x) \frac{\partial^2}{\partial {x_p}^2} f(t,\x) + \sum_{p=1}^P a_p(\x) \frac{\partial}{\partial x_p} f(t,\x),
+\end{equation}
+acting on some function $f(t,\x)$.
+Its \textit{formal} adjoint operator, acting on a function $g(t,\y)$, is given by (see \citet[ch. 15.5]{karlin1981})
+\begin{equation*}
+\calL_y^* \ g(t,\y) = \frac{1}{2}\sum_{p=1}^P \frac{\partial^2}{{\partial y_p}^2} \left[b_{pp}(\y)g(t,\y)\right] - \sum_{p=1}^P \frac{\partial}{\partial y_p} \left[a_p(\y) g(t,\y)\right].
+\end{equation*}
+
+Consider the \textit{transition probability density} $p(t_x,\x; t_y,\y)$ to go from state $\x$ at time $t_x$ to state $\y$ at time $t_y$.
+Assume that changing $p(t_x,\x; t_y,\y)$ is a stationary process (time homogeneous), i.e. $p(t_x, \x; t_x + \tau, \y) = p(0, \x; \tau, \y),\ \forall t_x, \tau > 0$.
+We define:
+$$p(\tau, \x, \y) := p(t_x, \x; t_y, \y)$$
+for the transition time $\tau = t_y - t_x$.\\
+
+Transition probability density $p(\tau, \x, \y)$ satisfies the Fokker-Planck equation or \textbf{Kolmogorov's forward equation} ($t_y > t_x$):
+\begin{equation} \label{KFE}
+\begin{split}
+\frac{\partial}{\partial \tau}p(\tau, \x, \y) &=  \calL_y^* \ p(\tau, \x, \y), \\
+\text{subject to initial condition: } & p(\tau, \x, \y) = \delta(\y - \x),
+\end{split}
+\end{equation}
+where $\delta$ is the Dirac delta function.
+We have to prevent a flow of probability across the border of $\calQ = [0,1]^P$.
+The \textit{probability current} $\J$ is defined as (see \citet[ch. 5.2.1]{gardiner1985})
+% \begin{equation*}
+% J_p(t_y,\y) = -\frac{1}{2}\sum_{q} \frac{\partial}{\partial y_q} \left[b_{pq}(\y)p(t_x,\x; t_y,\y)\right] + a_p(\y) p(t_x,\x; t_y,\y)
+% \end{equation*}
+\begin{equation*}
+J_p(\tau,\y) = \frac{1}{2}\frac{\partial}{\partial y_p} \left[b_{pp}(\y)p(\tau, \x, \y)\right] - a_p(\y) p(\tau, \x, \y)
+\end{equation*}
+where for notational convenience we suppressed the dependence on $\x$.
+We will set the \textbf{reflecting boundary conditions}:
+\begin{equation*}
+J_p(\tau,\y) = 0 \quad \text{at } \y:\ y_q \in \{0, 1\}, \ q=1,\ldots, P.
+\end{equation*}
+These ensure that the boundary of $\calQ$ is a reflecting barrier and no probability mass can leak out from the interior of $\calQ$.
+More about boundaries is available in \citet[ch. 5.2.1]{gardiner1985}.\\
+
+In addition, the transition probability density $p(\tau, \x, \y)$ satisfies \textbf{Kolmogorov's backward equation} with respect to the variable $x$:
+\begin{equation} \label{KBE}
+\begin{split}
+\frac{\partial}{\partial \tau}p(\tau, \x, \y) &=  \calL_x \ p(\tau, \x, \y),\\
+\text{subject to initial condition: } & p(\tau, \x, \y) = \delta(\x - \y).
+\end{split}
+\end{equation}
+The boundary conditions for a\textbf{ reflecting barrier} are of Neumann type (see \citet[ch. 5.2.1]{gardiner1985}):
+\begin{equation*}
+\frac{\partial}{\partial x_p}p(\tau, \x, \y) = 0, \quad \text{at } \x:\ x_q \in \{0, 1\}, \ q=1,\ldots, P.
+\end{equation*}
+
+It can be shown that $\calL_x$ and $\calL^\star_y$ with described reflecting boundary conditions are \textit{truly adjoint} operators in $L^2([0,1])$.
+
+
+\subsection{Hidden Diffusion Model}
+
+We now imagine our diffusion process $\X(t)$ is a hidden process of the HMM.
+At given times $t_0 < t_2 < \ldots < t_K$ we have $n_{pk}$ \textbf{diploid} samples of our observed locus, where $p=1,\ldots, P$ --- population number and $k=0,\ldots,K$ --- index of corresponding time point.\\
+
+Consider $c_{pk} \in [0, 2n_{pk}]$ --- the absolute frequency of allele $A$ among samples of the population $p$ at a time point $t_k$.
+Each $c_{pk}$ is an independent binomial variable, conditional on the unobserved value of $X_p(t_k) = x_{pk}$.
+More precisely, the emission probabilities for the sampling process $\C(t_k)$ are:
+\begin{equation}\label{eq:emission}
+\calB(\mathbf{c}_k | \mathbf{x}_k) := \P\left[\mathbf{C}(t_k) = \mathbf{c}_k | \mathbf{X}(t_k) = \mathbf{x}_k \right] = \prod\limits_{p=1}^P \binom{2n_{pk}}{c_{pk}} x_{pk}^{c_{pk}} (1-x_{pk})^{2n_{pk}-c_{pk}}.
+\end{equation}
+
+\subsubsection{Forward Recursion}
+
+Consider a time point $t$ between $t_k$ and $t_{k+1}$: $t_k \leq t < t_{k+1}$. Let $\tau=t-t_k$. Denote by $\alpha_k(\tau,\x)$ the probability of observing the emission data $\mathbf{c}_{0:k}$ up to $t_k$ and to be in state $\y$ at time $t=t_k+\tau$ (Figure~\ref{fig:supp:alpha_scheme}):
+\begin{equation*}
+\alpha_k(\tau,\y) := \P\left[ \X(t_k+\tau)=\y, \C(t_0)=\mathbf{c}_0, \ldots, \C(t_k)=\mathbf{c}_k \right].
+\end{equation*}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.3\textwidth]{figures/supplementary/forward.pdf}
+    \caption{Schematic of the forward variable $\alpha_k(\tau,\y)$.
+    Time runs downward from $t_0$ to $t_K$.
+    The hidden allele frequencies $\X(t)$ (centre) evolve through the Wright-Fisher diffusion and emit the observations $\C(t)$ of the allele counts (right).
+    The quantities in dark red are those whose joint probability defines $\alpha_k(\tau,\y)$: the past and present observations $\mathbf{c}_0,\ldots,\mathbf{c}_k$, together with the process state $\y$ at the intermediate time $t_k+\tau$.
+    The future time points $t_{k+1},\ldots,t_K$ are left blank, as their observations do not define $\alpha_k$.}
+    \label{fig:supp:alpha_scheme}
+\end{figure}
+
+The $\alpha_k$ satisfy the forward recursion
+\begin{equation}\label{eq:forward}
+\alpha_k(\tau,\y) = \int\limits_\calQ \alpha_{k-1}(\Delta t_{k-1},\x) \calB(\mathbf{c}_k | \x) p(\tau,\x,\y) \,\rm{d}\x,
+\end{equation}
+where $\Delta t_{k-1}=t_k - t_{k-1}$.
+From Equation~\ref{eq:forward} and Equation~\ref{KFE} we can derive that $\alpha_k(\tau,\y)$ satisfies the forward Kolmogorov equation:
+\begin{align}
+\frac{\partial}{\partial \tau}\alpha_k(\tau,\y) &=  \calL_y^* \ \alpha_k(\tau,\y) \label{KFEalpha}\\
+\text{subject to initial condition: } & \alpha_k(0,\y)=\alpha_{k-1}(\Delta t_{k-1},\y) \calB(\mathbf{c}_k | \y)
+\label{initial_alpha}
+\end{align}
+and reflecting boundary conditions:
+\begin{equation*}
+\frac{1}{2} \frac{\partial}{\partial y_p} \left[b_{pp}(\y)\alpha_k(\tau,\y)\right] - a_p(\y) \alpha_k(\tau,\y) = 0 \quad \text{at } \y:\ y_q \in \{0, 1\}, \ q=1,\ldots, P.
+\end{equation*}
+
+\bigskip
+
+The initial condition for $\alpha_0(\tau,\y)$ is special, namely
+\begin{equation}\label{alpha_0}
+\alpha_0(0,\y)=\alpha(\y) \calB(\mathbf{c}_0 | \y)
+\end{equation}
+where $\alpha$ is a prior density on $\calQ$.
+
+\bigskip
+
+That said, we can now, inductively and starting with $\alpha_0$, determine the $\alpha_k$ by numerically solving each PDE~\ref{eq:forward} on its time interval $0\leq\tau\leq \Delta t_k$, using the previous solution for the new initial condition.
+
+
+\subsubsection{Backward Recursion}
+
+Consider a time point $t$ between $t_k$ and $t_{k+1}$: $t_k < t \leq t_{k+1}$. This time, let $\tau=t_{k+1}-t$. Denote by $\beta_k(\tau,\x)$ the probability of observing the future emission data $\mathbf{c}_{k+1:K}$ conditional to  being in state $\x$ at time $t$ (Figure~\ref{fig:supp:beta_scheme}):
+\begin{equation*}
+\beta_k(\tau,\x) := \P\left[ \mathbf{C}(t_{k+1})=\mathbf{c}_{k+1}, \ldots, \mathbf{C}(t_K)=\mathbf{c}_K \big| \X(t_{k+1}-\tau)=\x \right].
+\end{equation*}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.3\textwidth]{figures/supplementary/backward.pdf}
+    \caption{Schematic of the backward variable $\beta_k(\tau,\x)$.
+    Time again runs downward from $t_0$ to $t_K$.
+    Conditional on the process occupying state $\x$ (blue) at the intermediate time $t_{k+1}-\tau$, the variable $\beta_k(\tau,\x)$ gives the probability of the future observations $\mathbf{c}_{k+1},\ldots,\mathbf{c}_K$ (red).
+    The earlier time points are left blank, as the past observations do not define $\beta_k$.
+    Together with Figure~\ref{fig:alpha_scheme}, this illustrates the complementary roles of the forward and backward recursions.}
+    \label{fig:supp:beta_scheme}
+\end{figure}
+
+The $\beta_k$ satisfy the backward recursion:
+\begin{equation}\label{eq:backward}
+\beta_k(\tau,\x) = \int\limits_\calQ p(\tau,\x,\y) \calB(\mathbf{c}_{k+1} | \y) \beta_{k+1}(\Delta t_{k+1},\y) \, \rm{d}\y,
+\end{equation}
+where $\Delta t_{k+1}=t_{k+2} - t_{k+1}$.
+From Equation~\ref{eq:backward} and Equation~\ref{KBE} we can derive that $\beta_k(\tau,\x)$ satisfies Kolmogorov's backward equation:
+\begin{align}
+\label{eq:KBEbeta}
+\frac{\partial}{\partial \tau}\beta_k(\tau,\x) &=  \calL_x \ \beta_k(\tau,\x)\\
+\label{eq:initial_beta}
+\text{subject to initial condition: } & \beta_k(0,\x)= \calB(\mathbf{c}_{k+1} | \x) \beta_{k+1}(\Delta t_{k+1},\x)
+\end{align}
+and the (Neumann type) reflecting boundary conditions:
+\begin{equation*}
+\frac{\partial}{\partial x_p}\beta_k(\tau,\x) = 0, \quad \text{at } \x:\ x_q \in \{0, 1\}, \ q=1,\ldots, P.
+\end{equation*}
+
+\bigskip
+
+The initial condition for $\beta_{K-1}(\tau,\x)$ is
+\begin{equation}
+\label{beta_K-1}
+\beta_{K-1}(0,\x)=\calB(\mathbf{c}_K | \x).
+\end{equation}
+
+\bigskip
+
+Recursively and starting with $\beta_{K-1}$, we determine the $\beta_k$ by numerically solving each PDE~\ref{eq:backward} on its time interval $0\leq\tau\leq \Delta t_k$, using the previous solution for the new initial condition.
+
+\subsubsection{Likelihood}
+
+Denote population sizes, selection, migration rates as parameters $\theta$.
+Those parameters form an HMM transition and emission probabilities.
+Having either $\alpha_k$ or $\beta_k$ we can compute the probability of getting the observations $c_{0},\ldots,c_{K}$ given parameters~$\theta$.
+
+Using forward recursion:
+\begin{equation}\label{likelihood_forward}
+    L(\theta \, | \, \mathbf{c}) = \P(C(t_0) = c_0, \ldots, C(t_K) = c_K\, \big| \, \theta) = \int\limits_\calQ \alpha_K(0, \y)\, d\y
+\end{equation}
+
+Using backward recursion:
+\begin{equation}\label{likelihood_backward}
+    L(\theta \, | \, \mathbf{c}) = \P(C(t_0) = c_0, \ldots, C(t_K) = c_K\, \big| \, \theta) = \int\limits_\calQ \beta_0(\Delta t_0, \x) \calB(\mathbf{c}_0 | \x) \, d\x
+\end{equation}
+
+\subsubsection{Approach Summary}
+
+For clarity, we write down the procedure we follow to compute the likelihood $L(\theta \, | \, \mathbf{c}) = \P(C(t_0) = c_0, \ldots, C(t_K) = c_K\, \big| \, \theta)$ for given values of parameters $\theta=(N_p, s_p, h, m_{pq})_{p,q=1}^P$.
+It can be done using either forward or backward recursion.
+
+\bigskip
+
+Using forward:
+\begin{enumerate}
+    \item Build infinitesimal mean $a_p(\y)$ and variance $b_{pp}(\y)$ according to the given $\theta$.
+    \item Set $k=0$ and repeat until $k=K-1$:
+    \begin{enumerate}
+        \item Construct the initial condition $\alpha_k(0, \y)$ using Equation~\ref{alpha_0} if $k=0$ or Equation~\ref{initial_alpha} otherwise.
+        \item Obtain $\alpha_k(t_{k+1}-t_k, \y)$ for $\y \in [0,1]^P$ by numerically solving the KFE in Equation~\ref{KFEalpha} forward in time for $\tau \in [0, t_{k+1}-t_k]$ with initial condition $\alpha_k(0, \y)$ and reflecting boundary conditions.
+        \item Set $k=k+1$.
+    \end{enumerate}
+    \item Obtain $\alpha_K(0, \y)$ using Equation~\ref{initial_alpha}.
+    \item Combine $\alpha_K(0, \y)$ for Equation~\ref{likelihood_forward} to obtain $L(\theta \, | \, \mathbf{c})$.
+\end{enumerate}
+
+Using backward:
+\begin{enumerate}
+    \item Build infinitesimal mean $a_p(\y)$ and variance $b_{pp}(\y)$ according to the given $\theta$.
+    \item Set $k=K-1$ and repeat until $k=0$:
+    \begin{enumerate}
+        \item Construct the initial condition $\beta_{k}(0, \x)$ using Equation~\ref{beta_K-1} if $k=K-1$ or Equation~\ref{eq:initial_beta} otherwise.
+        \item Obtain $\beta_{k}(t_{k+1}-t_k, \x)$ for $\x \in [0,1]^P$ by numerically solving the KBE in Equation~\ref{eq:KBEbeta} forward in time for $\tau \in [0, t_{k+1}-t_k]$ with initial condition $\beta_k(0, \x)$ and reflecting boundary conditions.
+        \item Set $k=k-1$.
+    \end{enumerate}
+    \item Combine $\beta_0(t_1-t_0, \x)$ for Equation~\ref{likelihood_backward} to obtain $L(\theta \, | \, \mathbf{c})$.
+\end{enumerate}
+
+\FloatBarrier
+\section{Overview of Numerical Methods}
+
+To compute the likelihood of the Hidden Markov Model, one can evaluate either the forward recursion (Eq.~\ref{likelihood_forward}) or the backward recursion (Eq.~\ref{likelihood_backward}). Initially, we implemented the Crank-Nicolson scheme for both the forward and backward Kolmogorov equations. 
+
+Although the Crank-Nicolson scheme is unconditionally stable, it often produces spurious oscillations when the drift term dominates the diffusion term or when sharp gradients occur \citep{morton2005}.
+This can result in non-physical negative probabilities, which break Hidden Markov Model likelihood calculations.
+To avoid this, we use the Chang-Cooper scheme \citep{chang1970, gutenkunst2009} for the forward pass, as it naturally conserves probability mass and strictly guarantees non-negative solutions.
+
+We compute all final empirical results in this study using the forward recursion paired with the robust Chang-Cooper scheme.
+For methodological completeness, we provide the derivations for the Crank-Nicolson scheme for the backward recursion.
+
+\FloatBarrier
+\subsection{Grid Discretization}\label{sec:grid}
+
+Assume the time axis is divided into $M$ intervals, yielding $M+1$ grid points, and the frequency axis for a specific population is divided into $D+1$ intervals, yielding $D+2$ grid points and $D$ inner grid points.
+The grid points are denoted by:
+\begin{align*}
+    \tau_n, \quad & \text{for } n = 0, 1, \ldots, M,\\
+    y_i, \quad & \text{for } i = 0, 1, \ldots, D+1.
+\end{align*}
+The grid spacing is given by:
+\begin{align*}
+    \Delta \tau_n &= \tau_n - \tau_{n-1}, \quad \text{for } n = 1, \ldots, M,\\
+    \Delta_i &= y_i - y_{i-1}, \quad \text{for } i = 1, \ldots, D+1.
+\end{align*}
+
+While time steps $\Delta \tau_n$ are typically uniform, the spatial grid often benefits from clustering points near the boundaries $0$ and $1$ to properly capture the effects of genetic drift \cite{gutenkunst2009, fine2025}.
+Therefore, we constructed and tested several symmetrical spatial grids that vary in their clustering density near the boundaries.
+The implemented grid mapping functions are (Figure~\ref{fig:supp:grid_types}):
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=\textwidth]{figures/supplementary/grid_types.pdf}
+\caption{\textbf{Comparison of implemented spatial grid types for allele frequencies.}
+Four symmetric grid types are shown using $D=48$ internal points (50 total grid nodes).
+The red vertical lines (bottom) indicate the exact locations of the grid nodes.
+The solid blue curves represent the step size ($\Delta_i$) between adjacent nodes.
+While the Uniform grid maintains a constant step size, the Quadratic, Chebyshev, and Logistic ($a=10$) grids exhibit varying degrees of density clustering near the boundaries ($0$ and $1$).
+}
+\label{fig:supp:grid_types}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Uniform grid.} 
+    \begin{equation*}
+        y_i = \xi_i = \frac{i}{D+1}.
+    \end{equation*}
+    
+    \item \textbf{Quadratic grid.}
+    Adapted from other population genetics studies~\citep{gutenkunst2009, malaspinas2012, ferrer2016}, this grid is designed such that the spacing between adjacent points follows a quadratic density, clustering grid points near the boundaries. 
+    Compared to previous implementations, we construct a strictly symmetric and continuous grid.
+    Starting with $y_0=0$:
+    \begin{equation*}
+        y_i = y_{i-1} + x_i(1-x_i), \quad \text{where} \quad x_i = \frac{i - 0.5}{D+1},
+    \end{equation*}
+    the grid is subsequently scaled so that $y_{D+1} = 1$.
+
+    \item \textbf{Chebyshev grid.} Based on the roots of Chebyshev polynomials, these nodes minimize Runge's phenomenon in numerical integration \citep{mathews2004}. Their application for population genetic time-series models was recently shown in \citet{fine2025}.
+    The ascending grid points on the interval $[0,1]$ are given by:
+    \begin{equation*}
+        y_i = \frac{1}{2} \left[ 1 - \cos\left(\pi \xi_i\right) \right]
+    \end{equation*}
+
+    \item \textbf{Logistic grid.} Also referred to as an exponential grid~\citep{malaspinas2012}, it uses the following logistic function defined by a scale parameter $a > 0$:
+    \begin{equation*}
+        {y}_i = \frac{1}{1 + e^{-a \cdot (\xi_i - 0.5)}},
+    \end{equation*}
+    the grid is further scaled so that $y_0 = 0$ and $y_{D+1} = 1$.
+\end{itemize}
+
+
+\subsection{1D Forward Equation (Chang-Cooper Scheme)}
+First, we derive numerical solution for Kolmogorov forward equation in case of one population.
+We later extend it to the multi-dimensional case.
+
+For notational simplicity, we drop the population and time segment indices, focusing on the evaluation of the density function $\alpha(\tau, y)$ over time.
+We remind that we solve the following equation:
+\begin{equation*}
+\begin{split}
+&\frac{\partial}{\partial \tau}\alpha(\tau,y) = \frac{1}{2} \frac{\partial^2}{\partial y^2} \left[b(y)\alpha(\tau,y)\right] - \frac{\partial}{\partial y} \left[a(y)\alpha(\tau,y)\right], \\
+\text{with a boundary condition: } & \frac{1}{2} \frac{\partial}{\partial y} \left[b(y)\alpha(\tau, y)\right] - a(y) \alpha(\tau,y) = 0,
+\end{split}
+\end{equation*}
+where function $a(y)$ and $b(y)$ are defined by Equation~\ref{eq:mean_func} and Equation~\ref{eq:cov_func} correspondingly.
+
+\bigskip
+
+The Chang-Cooper scheme is specifically engineered for Fokker-Planck equations, guaranteeing mass conservation and non-negative solutions \citep{chang1970}.
+To use the same notation as in the original paper, we rewrite the forward Kolmogorov equation in the following flux form:
+$$
+\frac{\partial}{\partial \tau}\alpha(\tau,y) = \frac{\partial}{\partial y} \left[ C(y) \frac{\partial}{\partial y} \alpha(\tau, y) + B(y) \alpha(\tau, y) \right] = \frac{\partial F}{\partial y},
+$$
+where the substituted drift and diffusion functions are defined as:
+$$
+\begin{aligned}
+    B(y) &= \frac{1}{2} \frac{\partial}{\partial y}[b(y)] - a(y), \\
+    C(y) &= \frac{1}{2} b(y).
+\end{aligned}
+$$
+
+Having Equation~\ref{eq:cov_func} for $ b(y) $, we evaluate the analytical derivative as:
+$$
+\frac{\partial}{\partial y}[b(y)] = \frac{1 - 2y}{2N}
+$$
+
+Regarding the boundary condition, we note that $b(y=0)$ and $b(y=1)$ evaluate to 0, while $a(y) \neq 0$ at the boundaries.
+Given our zero-flux reflecting boundary condition, this yields $\alpha(y=0) = 0$ and $\alpha(y=1) = 0$.
+The Chang-Cooper scheme is a finite-volume method and operates using numerical fluxes --- the rate of probability mass flowing across the boundaries of each cell.
+By explicitly setting the exterior boundary fluxes $F_{1/2}$ and $F_{D+1/2}$ to 0, we can safely enforce the reflecting boundary conditions.
+This reduces our numerical system to a $D \times D$ matrix operating exclusively on the interior grid points.
+
+\bigskip
+
+Chang-Cooper scheme discretize the equation in the following way:
+\begin{equation}\label{eq:cc_discretization}
+\frac{1}{\Delta \tau_n} \left(\alpha^{n+1}_j - \alpha^n_j\right) = \frac{1}{\Delta_j}\left(F_{j+1/2} -F_{j-1/2}\right),
+\end{equation}
+where $\alpha^n_j = \alpha(\tau^n, y_j)$ and flux $F_{j+1/2}$ is defined as:
+\begin{equation}
+    \label{eq:cc_flux}
+    \begin{split}
+    F_{j+1/2} &= \left((1-\delta_j)B(y_{j+1/2}) + \frac{1}{\Delta x}C(y_{j+1/2})\right) \alpha^{n+1}_{j+1} - \left(\frac{1}{\Delta x}C(y_{j+1/2}) - \delta_j B(y_{j+1/2}) \right) \alpha^{n+1}_{j} \\
+    F_{1/2} &= F_{D+1/2} = 0.
+    \end{split}
+\end{equation}
+
+This weighted average relies on a dynamic flux-weighting parameter $ \delta_j \in [0,1] $.
+This parameter adaptively shifts the discrete approximation from a centered differencing scheme (when $\delta_j = 0.5$) to an upwind scheme (as $\delta_j$ approaches $0$ or $1$).
+It is defined in such a way that the method yields stable, non-negative solutions, without restriction on $\Delta_j$.
+In the original paper~\citet{chang1970} this coefficient is defined as:
+\begin{equation*}
+    \begin{split}
+    \delta^{n+1}_j &= \frac{1}{\omega_j} + \frac{1}{1 - \exp(\omega_j)}, \\
+    \omega_j &= \frac{B(y_{j+1/2})}{C(y_{j+1/2})} \Delta_{j+1}
+    \end{split}
+\end{equation*}
+
+However, our empirical experiments demonstrated that evaluating $\omega$ as a ratio at the midpoint is unstable for the Wright-Fisher model.
+This occurs because the diffusion coefficient $C(y)$ goes to 0 at the boundaries $0$ and $1$.
+The stability can be improved by using non-uniform grids with points clustered at the boundaries.
+However, we adopted the structure-preserving Chang-Cooper (SP-CC) framework proposed by \citet{pareschi2018} instead:
+\begin{equation}\label{eq:omega}
+\omega_j = \int_{y_j}^{y_{j+1}} \frac{B(y)}{C(y)} \, dy = \int \frac{B_p(y)}{C_p(y)} \Biggr\rvert_{y_{j}}^{y_{j+1}}
+\end{equation}
+
+Substituting our specific drift and diffusion functions, this integral yields an exact, closed-form analytical solution.
+Reintroducing the population index $p$, the general antiderivative takes the form:
+\begin{equation*}
+\begin{split}
+\int \frac{B_p(y)}{C_p(y)} \, dy_p &=  
+\left[ 1 - 4 N_p (1 - (\mathcal{C} + m_{pp})(1 - \mu_{Aa} - \mu_{aA}) - \mu_{aA}) \right] \log(1 - y) \\
+&\quad + \left[ 1 - 4 N_p (\mu_{aA} + \mathcal{C} (1 - \mu_{Aa} - \mu_{aA})) \right] \log(y) \\
+&\quad - \left[ 2 N_p m_{pp} (1 - \mu_{Aa} - \mu_{aA}) \right] \log\left(w_{AA} y^2  + 2 w_{Aa} y (1-y) + w_{aa} (1 - y)^2\right) + C,
+\end{split}
+\end{equation*}
+where $C$ is the constant of integration which cancels out when evaluating the definite integral, and $\mathcal{C}$ is defined as:
+\begin{equation*}
+\mathcal{C} = \sum_{q \neq p} m_{pq} \frac{w_{AA} y_q^2 + w_{Aa} y_q (1 - y_q)}{w_{AA} y_q^2 + 2 w_{Aa} y_q (1 - y_q) + w_{aa}(1-y_q)^2}.
+\end{equation*}
+
+\bigskip
+
+Therefore, we can rewrite the Chang and Cooper scheme in two distinct steps:
+\begin{enumerate}
+    \item For each $j=0,\ldots, N+1$ evaluate $\omega_j$ using Equation~\ref{eq:omega} and $\delta_j$ using:
+    $$
+    \begin{aligned}
+        \delta_j &=
+        \begin{dcases}
+            \frac{1}{\omega_j} + \frac{1}{1 - \exp(\omega_j)}, & \text{if } \omega_j \neq 0, \\
+            0.5, & \text{if } \omega_j = 0.
+        \end{dcases}
+    \end{aligned}
+    $$
+    
+    \item For each time step $\tau_n,\ n=1,\ldots,M$ obtain $\alpha^{n+1}$ from $\alpha^{n}$.
+    \begin{equation*} 
+        \alpha^n = \begin{pmatrix}
+        \alpha(\tau_n, y_1)\\
+        \alpha(\tau_n, y_2)\\
+        \vdots \\
+        \alpha(\tau_n, y_N)\\
+    \end{pmatrix}	
+    \end{equation*}
+    By substituting the numerical flux (Equation~\ref{eq:cc_flux}) back into the implicit difference operator (Equation~\ref{eq:cc_discretization}) we obtain the tridiagonal system.
+    Having the value for $\alpha^n$ on time step $\tau_n$, we obtain the value $\alpha^{n+1}$ on the next level of time grid by solving:
+    $$
+    \left(\I + \B \right) \alpha^{n+1} = \alpha^n.
+    $$
+    
+    where $\I$ is the identity matrix and $\B$ is defined as follows:
+    \begin{equation}\label{eq:forward_cc_matrix}
+    \B =
+    \begin{pmatrix}
+        -X_1 & -Z_1 & 0 & \hdots & 0 \\
+        X_1 & -X_2 - Z_1 & -Z_2 & \hdots & 0 \\
+        0 & X_2 & -X_3 - Z_2 & \hdots & 0 \\
+        \vdots & \ddots & \ddots & \ddots & \vdots\\
+        0 & \hdots & X_{D-2} & -X_{D-1} - Z_{D-2} & -Z_{D-1} \\
+        0 & \hdots & 0 & X_{D-1} & - Z_{D-1}
+    \end{pmatrix}.
+    \end{equation}
+    $$
+    \begin{aligned}
+        X_j &= \frac{\Delta \tau_{n+1}}{\Delta_j} \left[ \frac{1}{\Delta_{j+1}} C(y_{j+1/2}) - \delta_j B(y_{j+1/2}) \right], \\
+        Z_j &= \frac{\Delta \tau_{n+1}}{\Delta_j} \left[ \frac{1}{\Delta_{j+1}} C(y_{j+1/2}) + (1-\delta_j) B(y_{j+1/2}) \right].
+    \end{aligned}
+    $$
+    We iterate this system forwards through the temporal observation sequence, solving the tridiagonal matrix inversion efficiently in $\mathcal{O}(D)$ time using the Thomas algorithm used in \citet{gutenkunst2009}.
+\end{enumerate}
+
+\subsection{1D Backward Equation (Crank-Nicolson Scheme)}
+
+As an alternative way to calculate the likelihood for temporal HMM, we can run backward pass, which requires solving backward Kolmogorov equation.
+We also start with the case of one population and neglect population and time segment indices for notation simplicity.
+Therefore, we denote the target conditional probability function as $\beta(\tau, x)$ and we aim to solve:
+\begin{equation*}
+\begin{split}
+\frac{\partial}{\partial \tau}\beta(\tau,x) &= \frac{1}{2}b(x) \frac{\partial^2}{\partial x^2} \beta(\tau,x) + a(x) \frac{\partial}{\partial x} \beta(\tau,x), \\
+\text{with a boundary condition: } \frac{\partial}{\partial x}\beta(\tau,x) &= 0, \quad \text{at } x=0,\ x=1.
+\end{split}
+\end{equation*}
+
+Because the boundaries at $ x=0 $ and $ x=1 $ act as reflecting barriers, they result in $\beta(\tau, x_0) = \beta(\tau, x_1)$ and $ \beta(\tau, x_{D+1}) = \beta(\tau, x_D) $.
+
+To numerically evaluate this system, we discretize using the standard Crank-Nicolson finite difference scheme.
+We denote $\beta_j^n = \beta(\tau_n, x_j)$ and use the following approximations for the first and second derivatives:
+$$
+\begin{aligned}
+    \frac{\partial}{\partial t}  \beta_{j}^{n}  &\approx \frac{\beta_{j}^{n+1} - \beta_{j}^{n}}{\Delta t}, \label{eq:derivativeT} \\
+    \frac{\partial}{\partial x} \beta_{j}^{n} &\approx \frac{\beta_{j+1}^{n} - \beta_{j-1}^{n}}{\Delta_j + \Delta_{j+1}}, \\
+    \frac{\partial^2}{\partial x^2} \beta_{j}^{n} &\approx \frac{\beta_{j+1}^{n} - \beta_j}{\frac{1}{2}\Delta_{j+1}(\Delta_j + \Delta_{j+1})} - \frac{\beta_{j}^{n} - \beta_{j-1}^{n}}{\frac{1}{2}\Delta_j(\Delta_j + \Delta_{j+1})}.
+\end{aligned}
+$$
+
+\bigskip
+
+Let $ \beta^n $ denote the column vector representing the conditional probabilities evaluated at the $ D $ interior grid points at time $ \tau_n $:
+\begin{equation*}
+    \beta^{n} =
+    \begin{pmatrix}
+        \beta(\tau_n, x_1)\\
+        \beta(\tau_n, x_2)\\
+        \vdots \\
+        \beta(\tau_n, x_N)\\
+    \end{pmatrix}	
+\end{equation*}
+
+By applying proposed approximations and boundary conditions to our backward equation, the solution dynamic is captured by a tridiagonal linear system:
+$$
+\left(\I - \A \right) \beta^{n+1} = \left(\I + \A \right)\beta^n.
+$$
+
+with matrix $\A$ defined as:
+\begin{equation}\label{eq:backward_cn_matrix}
+\A =
+\begin{pmatrix}
+    -A_1 & A_1 & 0 & \hdots & 0 \\
+    C_2 & -A_2 - C_2 & A_2 & \hdots & 0 \\
+    0 & C_3 & -A_3 - C_3 & \hdots & 0 \\
+    \vdots & \ddots & \ddots & \ddots & \vdots\\
+    0 & \hdots & C_{D-1} & -A_{D-1} - C_{D-1} & A_{D-1} \\
+    0 & \hdots & 0 & C_D & -C_D
+\end{pmatrix}.
+\end{equation}
+$$
+\begin{aligned}
+    A_j &= \frac{1}{4}\left( \Delta_j \lambda_j^b + \lambda_j^a \right), \\
+    C_j &= \frac{1}{4}\left( \Delta_{j+1} \lambda_j^b - \lambda_j^a \right).
+\end{aligned}
+$$
+$$
+\begin{aligned}
+    \lambda_j^b &= b(x_j) \frac{2 \Delta \tau_{n+1}}{\Delta_j \Delta_{j+1}(\Delta_j + \Delta_{j+1})}, \\
+    \lambda_j^a &= a(x_j) \frac{2\Delta \tau_{n+1}}{\Delta_j + \Delta_{j+1}}.
+\end{aligned}
+$$
+
+We iterate this system backwards through the temporal observation sequence, solving the tridiagonal matrix inversion efficiently in $\mathcal{O}(D)$ time using the Thomas algorithm.
+
+\subsection{Extension to Multidimensional Case (Alternating Direction Method)}
+
+Having derived the one-dimensional numerical schemes for both the forward and backward passes, we now extend our approach to $P$-dimensional partial differential equations (representing $P$ interacting populations).
+For a spatial grid with $D$ interior nodes per dimension evaluated over $M$ total time steps, solving a fully coupled implicit multidimensional scheme directly requires flattening the state space into a massive banded matrix.
+This results in an intractable time complexity of $\mathcal{O}(M D^{3P-2})$ and a memory complexity of $\mathcal{O}(D^{2P-1})$.
+
+To avoid this computational cost, we utilize an alternating direction method based on operator splitting \citep[p. 1051]{press2007}.
+By decomposing the multidimensional scheme into a sequence of easily solvable 1D tridiagonal systems, this approach drastically reduces the time complexity to $\mathcal{O}(M D^P)$ and the memory requirements to just $\mathcal{O}(D^P)$.
+
+\bigskip
+
+Let $u^n$ represent the probability state vector at time $\tau_n$ (which can be either the forward probability density $\alpha^n$ or the backward conditional probability $\beta^n$). Any of our one-dimensional numerical schemes for dimension $p$ can be expressed in the following general matrix form:
+\begin{equation*}
+    \C_p u^{n+1} = \D_p u^{n}.
+\end{equation*}
+
+The exact definitions of the matrices $\C_p$ and $\D_p$ depend on the chosen numerical scheme.
+They are built using the respective tridiagonal operator matrices $\B_p$ (derived for the forward pass in Eq.~\ref{eq:forward_cc_matrix}) and $\A_p$ (derived for the backward pass in Eq.~\ref{eq:backward_cn_matrix}). 
+Crucially, the subscript $p$ indicates that these matrices are defined by the specific drift function $a_p(\mathbf{y})$ and diffusion function $b_{pp}(\mathbf{y})$ governing population $p$.
+For a full time step $\Delta \tau$, the schemes are defined as:
+\begin{itemize}
+    \item \textbf{Forward pass (Chang-Cooper):} $\C_p = \I + \B_p$ and $\D_p = \I$.
+    \item \textbf{Backward pass (Crank-Nicolson):} $\C_p = \I - \A_p$ and $\D_p = \I + \A_p$.
+\end{itemize}
+
+\bigskip
+
+Let $\mathbf{i}_{-p} = (i_1, \dots, i_{p-1}, \cdot, i_{p+1}, \dots, i_P)$ denote the spatial grid coordinates omitting the $p$-th dimension. The notation $[\cdot]_{\mathbf{i}_{-p}}$ represents a single one-dimensional "column" extracted along the axis of population $p$. 
+
+In our multidimensional model, the drift and diffusion terms are coupled; $a_p$ and $b_{pp}$ depend not only on frequency in population $p$ but also on the frequencies of other populations due to migration.
+However, along any specific column $\mathbf{i}_{-p}$, the frequencies of all other populations are fixed constants.
+This allows the multidimensional functions $a_p$ and $b_{pp}$ to be evaluated strictly as 1D functions of $y_p$.
+Consequently, the 1D operator matrices are uniquely constructed for each individual column.
+To reflect this explicit spatial dependency, we denote these column-specific matrices as $\C_{p, \mathbf{i}_{-p}}$ and $\D_{p, \mathbf{i}_{-p}}$.
+
+By splitting the operator over $P$ dimensions, we advance the solution from time level $n$ to $n+1$ via $P$ sequential fractional steps. Applied to our matrix formulation, each spatial operator is implicitly evaluated over the full time step $\Delta \tau$, yielding the following sequence of $P$ equations:
+\begin{align*}
+    \C_{1, \mathbf{i}_{-1}} \left[u^{n+1/P}\right]_{\mathbf{i}_{-1}} &= \D_{1, \mathbf{i}_{-1}} \left[u^n\right]_{\mathbf{i}_{-1}},\quad \text{for each column } \mathbf{i}_{-1}, \\
+    \C_{2, \mathbf{i}_{-2}} \left[u^{n+2/P}\right]_{\mathbf{i}_{-2}} &= \D_{2, \mathbf{i}_{-2}} \left[u^{n+1/P}\right]_{\mathbf{i}_{-2}},\quad \text{for each column } \mathbf{i}_{-2}, \\
+    & \;\; \vdots \\
+    \C_{P, \mathbf{i}_{-P}} \left[u^{n+1}\right]_{\mathbf{i}_{-P}} &= \D_{P, \mathbf{i}_{-P}} \left[u^{n+(P-1)/P}\right]_{\mathbf{i}_{-P}},\quad \text{for each column } \mathbf{i}_{-P},
+\end{align*}
+where the fractional superscripts (e.g., $u^{n+1/P}$) represent intermediate algorithmic states rather than physical time steps.
+
+To prevent directional bias and maintain formal temporal accuracy, the sequence in which the 1D directional operators are applied is alternated between consecutive time steps. During the first time step, the spatial dimensions are evaluated in standard ascending order ($1, 2, \dots, P$). In the subsequent time step, the evaluation order is exactly reversed ($P, P-1, \dots, 1$). This effectively symmetrizes the splitting error.
+
+\section{Default Simulation and \SweepLink Configurations}
+\label{supp:default-config}
+
+Unless otherwise noted, all simulated benchmarks in this study share a common default configuration, described here once and referenced throughout the main text.
+Data are generated using the forward-in-time simulator SLiM v4 \citep{Haller2023} and are designed to mimic empirical human data.
+Each simulated dataset consists of six short chromosomes of equal length, $0.1$~Mb.
+Three chromosomes contain only neutral mutations.
+The remaining three chromosomes each carry a single hard selective sweep introduced at the midpoint of the chromosome, with selection coefficients $s = 0.01$ (weak), $s = 0.02$ (moderate), and $s = 0.05$ (strong), respectively.
+Population parameters are chosen to resemble realistic human populations.
+The effective population size is set to $N = 10{,}000$ individuals \citep{Takahata1993}.
+The mutation rate is $\mu = 10^{-8}$ per site per generation.
+The recombination rate is $r = 10^{-8}$ cM per Mb.
+Sampling begins once the selected allele reaches a frequency of $30\%$.
+Genetic data are sampled at $K = 11$ consecutive time points, with $\Delta t = 16$ generations between consecutive samples, spanning a total of $160$ generations.
+This sampling regime mirrors the real human data analyzed in this study, which includes samples dating back approximately $4{,}000$ years before present.
+At each time point, genetic data are sampled for $n = 25$ diploid individuals.
+This entire simulation setup is replicated $100$ independent times per experimental configuration.
+
+Unless stated otherwise, \SweepLink is launched with quadratic grid with 50 grid points for the numerical scheme of the diffusion equation.
+The choice of quadratic grid over other implemented grid types is defined below.
+The following grid on positive values of selection is used (13 states): 0.0, 0.005, 0.010, 0.015, 0.020, 0.025, 0.030, 0.035, 0.040, 0.045, 0.050, 0.055, 0.060.
+The dominance coefficient is fixed to 0.5 (no dominance).
+
+\section{Data filtering and Optimal Grid Type}
+
+\subsection{Experimental Setup}
+
+We explore the mean likelihood surfaces for population size $N$ and selection $s$ to evaluate how temporal layer of \SweepLink depends on choice of spatial grid point distribution and on data filtering.
+Using the default simulation configuration described in Section~\ref{supp:default-config}, we compare four implemented spatial grid types: uniform, quadratic, Chebyshev, and logistic (Figure~\ref{fig:supp:grid_types}).
+
+To assess the estimation of $N$, we constructed expected likelihood surfaces across sample sizes of $n=10, 25, 100$, and $500$ using 100 simulated datasets, each comprising 300 linked neutral loci.
+Next, to evaluate the inference of $s$, we generated expected likelihood surfaces for a representative sample size of $n=25$ using 100 simulated datasets, each containing 500 unlinked selective sweeps with varying selection strengths ($s=0.0, 0.01, 0.02$, and $0.05$).
+
+We tested \SweepLink using four grid types for the allele frequency: uniform, quadratic, Chebyshev, and logistic (Figure~\ref{fig:supp:grid_types}).
+We evaluated the shapes of the resulting likelihood surfaces to determine which grid type provides the most accurate and reliable parameter estimation.
+Additionally, we compared the performance of \SweepLink against \ApproxWF and \diplolocus.
+
+
+\subsection{Results}
+
+\begin{figure}[b]
+\centering
+\includegraphics[width=\textwidth]{figures/N_likelihood_surface/n_surface_no_filtering_cutNonSeg.pdf}
+\caption{Mean relative likelihood surfaces for population size estimation using \SweepLink across various grid types for allele frequencies and \ApproxWF.
+Solid lines represent the mean and shaded regions denote the confidence intervals calculated across 100 independent datasets, each containing 300 loci.
+The triangle marks the maximum point of the mean likelihood.
+The ground truth population size of $10{,}000$ individuals is indicated by the vertical red dashed line.}
+\label{fig:results:n_likleihood_shapes}
+\end{figure}
+
+Figure~\ref{fig:results:n_likleihood_shapes} illustrates the obtained expected likelihood surfaces for the population size ($N$) evaluated at sample sizes of $n=10, 25, 100$, and $500$.
+
+The topology of the likelihood surface for population size estimation is strongly influenced by the sample size ($n$).
+In small-sample regimes ($n=10, 25$), the likelihood increases sharply for small population sizes but reaches a plateau near the ground truth, failing to decay for larger parameter values.
+This indicates that while small sample sizes can provide a lower bound for population size, they lack the resolution to define an upper bound. 
+In contrast, larger sample sizes ($n=100, 500$) produce a clearly unimodal likelihood surface with a distinct peak at the ground truth.
+We note that \SweepLink with the uniform grid appears to be the best choice in most cases, especially in small-sample regimes ($n=10, 25$), as it maintains a small likelihood peak near the true value before the plateau.
+In the large-sample regime ($n=500$) all grid types perform well.
+Across all scenarios, \SweepLink with the uniform grid provides more accurate maximum likelihood estimates than \ApproxWF.
+
+\begin{figure}[t]
+\centering
+    \includegraphics[width=\textwidth]{figures/s_likelihood_surface/s_surface_freq50.pdf}
+\caption{Mean relative likelihood surfaces for selection estimation using \SweepLink across various grid types, \ApproxWF and \diplolocus.
+Solid lines represent the mean and shaded regions denote the confidence intervals calculated across 100 independent datasets, each containing 500 unlinked loci under selection.
+The triangle marks the maximum point of the mean likelihood.
+The ground truth selection coefficients are indicated by the vertical red dashed line.
+}
+\label{fig:results:s_likleihood_shapes}
+\end{figure}
+
+The expected likelihood surfaces for the selection coefficient ($s$) for a representative sample size of $n=25$ are shown on Figure~\ref{fig:results:s_likleihood_shapes}.
+
+The topology of the likelihood surface for $s$ is moderately influenced by the choice of grid type.
+The most well-defined, unimodal surfaces were observed with the uniform grid, followed closely by the Chebychev and quadratic grids.
+This makes uniform grid a robust default grid type for the joint inference.
+In contrast, the tanh and logistic grids produced flatter likelihood profiles with reduced curvature.
+We note that this ordering of grid performance directly corresponds to the density of grid nodes at intermediate allele frequencies (around 0.5). 
+While the uniform grid maintains a constant resolution across the entire frequency spectrum, the quadratic, Chebyshev, tanh, and logistic grids progressively deplete the number of nodes in the central region in favor of increasingly dense clustering near the boundaries (Figure~\ref{fig:supp:grid_types}).
+Because the deterministic effect of selection drives the largest allele frequency shifts at intermediate frequencies, excessively sparse grids in this region fail to adequately resolve the selection dynamics, resulting in the observed loss of likelihood curvature.
+
+The precision of the selection estimates is sensitive to the underlying intensity of selection.
+For neutrality ($s=0$) and moderate selection coefficients ($s=0.01$ and $s=0.02$), \SweepLink produces well-behaved likelihood surfaces with clear peaks centered at the ground truth.
+Under strong selection ($s=0.05$), the surface exhibits a plateau at higher parameter values, suggesting a lack of statistical resolution to define an upper bound.
+Crucially, however, even when the surface is nearly flat, \SweepLink consistently maintains a maximum likelihood estimate very close to the true value.
+This indicates that while the confidence in the exact value may decrease under strong selection, the point estimate remains highly accurate.
+In comparison with other methods, \diplolocus produces highly resolved likelihood surfaces with sharp peaks near the ground truth.
+However, it must be noted that \diplolocus requires the population size to be known a priori, whereas \SweepLink performs a joint inference of both $N$ and $s$.
+While \ApproxWF demonstrated likelihood shapes similar to---and occasionally steeper than---\SweepLink, it exhibited a significant downward bias under the strong selection ($s=0.05$) scenario.
+
+
+\section{Extended Benchmarking of \SweepLink on Simulated Data}
+\label{sec:supp:sweeplink_benchmarking}
+
+\subsection{Experimental Setup}
+
+We further validate the robustness of the \SweepLink framework under diverse evolutionary and sampling scenarios.
+We first establish the default configuration, which serves as a baseline for all subsequent experiments.
+To assess the impact of individual characteristics on the accuracy of \texttt{SweepLink}, we varied one characteristic at a time---for example, sample size, sequence length or recombination rate---while keeping all other parameters constant at their default values.
+This approach enables us to quantify how each parameter influences the accuracy of inference.
+
+For each experiment, we generated six chromosomes, each with a length of 0.1~Mb in the default configuration.
+Three chromosomes contained only neutral mutations.
+The remaining three chromosomes had a hard selective sweep introduced at the middle position, with a selection coefficient equal to $0.01$, $0.02$, or $0.05$, respectively.
+Population parameters were chosen to resemble realistic human populations: population size was set to 10{,}000 individuals, mutation rate to $10^{-8}$ per site per generation, and recombination rate to $10^{-8}$~cM per~Mb.
+Sampling was performed once the selected allele reached a frequency of 30\%.
+Genetic data were sampled at eleven consecutive time points, with 16 generations between each, thereby spanning 160 generations.
+This sampling regime reflects the real human data analyzed in this study, which includes samples dating approximately 4,000 years before present.
+At each time point, genetic data for 25 diploid individuals were sampled.
+Sweeplink is launched with 50 grid points for the numerical scheme of the diffusion equation.
+The following grid on positive values of selection is used (13 states): 0.0, 0.005, 0.010, 0.015, 0.020, 0.025, 0.030, 0.035, 0.040, 0.045, 0.050, 0.055, 0.060.
+The dominance coefficient is fixed to 0.5 (no dominance).
+
+In summary, we test \texttt{SweepLink} across the following characteristics: 1) sample size, 2) sequence length, 3) number of time points, 4) binning size, 5) starting allele frequency of the selective sweep, 6) recombination rate, and 7) grid size in the numerical scheme for the diffusion equation.
+
+For the sample size experiments, the number of sampled diploid individuals was kept equal at all time points, with values of 5, 10, 25, 50, 100, 250, or 500.
+For sequence length variation, all six chromosomes were simulated with the same length, using one of the following values in separate experiments: 0.05, 0.1, 0.2, 0.5, or 1 Mb.
+For experiments varying the number of time points, we used 6, 11, 21, and 41 time points, spanning uniformly over 160 generations.
+
+
+In order to assess the effect of binning, we sampled genetic data from two randomly chosen diploid individuals from the population at every generation over a total span of 160 generations.
+We defined bins by dividing this time span into intervals of equal length, and used the midpoint of each interval as the representative time point for that bin.
+The interval lengths tested were 2, 4, 8, 16, 32, 40, and 80 generations, which correspond to 80, 40, 20, 10, 5, 4, and 2 bins, respectively.
+For each bin, all samples from generations falling within the interval were assigned to the bin represented by that interval's midpoint.
+At the boundaries between adjacent intervals, one sample from that generation was assigned to one bin and the other sample to the next bin.
+For example, with an interval length of 40 generations, the bins cover the generation ranges 0–20, 20–60, 60–100, 100–140, and 140–160 (relative to the first sampling point), with representative time points at 0, 40, 80, 120, and 160 generations after the first sampling point.
+The central bins each contain an equal number of samples, whereas the two edge bins (at the first and last time points) may include fewer samples, as they are only one-sided.
+This procedure ensures that the binning scheme is as balanced as possible, except at the boundaries of the interval.
+
+In a separate set of experiments, we investigate how varying the initial frequency of the derived allele at the selected locus influences inference results.
+To do this, we initiate sampling at the generation when the frequency of the derived allele undergoing a hard sweep first reached one of the following values: 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, or 0.9.
+
+The linkage between loci and the magnitude of the hitch-hiking effect are influenced by the recombination rate.
+While SweepLink estimates the recombination rate automatically, we expect its inference accuracy to be higher under stronger linkage, that is, at lower recombination rates.
+To explore this, we varied the recombination rate across five values: $10^{-9}$, $10^{-8}$, $10^{-7}$, $10^{-6}$ and $10^{-5}$ cM per Mb.
+
+The final set of experiments assessed how the grid size in the numerical scheme for the diffusion equation in SweepLink affects inference accuracy.
+We tested grid sizes of 5, 10, 20, 50, and 100 points.
+
+
+\subsection{Results}
+
+\begin{figure}[htbp]
+    \centering
+    % 1. Make labels uppercase A, B, C without parentheses
+    \renewcommand{\thesubfigure}{\Alph{subfigure}}
+    \captionsetup[subfigure]{labelformat=simple}
+    
+    % 2. Force labels to exact top-left, make them bold/larger, and remove padding
+    \captionsetup[subfigure]{
+        position=top, 
+        labelfont={bf, Large}, % Makes the A, B, C bold and larger
+        textfont=normalfont,
+        singlelinecheck=off, 
+        justification=raggedright, 
+        skip=0pt, % Removes the default vertical padding
+        margin=0pt
+    }
+    
+    % ROW 1
+    \begin{subfigure}[t]{0.48\textwidth}
+        \caption{}
+        \label{fig:supp:power_analysis:sample_size}
+        \vspace{-0.4cm} % <--- Pulls the image up
+        \hfill % <--- Pushes the image to the right, leaving left space for "A"
+        \includegraphics[width=0.94\textwidth, trim={0.3cm 0cm 0cm 0.2cm}, clip]{figures/MCC/sample_size_power_plot.pdf}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.48\textwidth}
+        \caption{}
+        \label{fig:supp:power_analysis:tpoints_num}
+        \vspace{-0.4cm}
+        \hfill
+        \includegraphics[width=0.94\textwidth, trim={0.3cm 0cm 0cm 0.2cm}, clip]{figures/MCC/tpoints_num_power_plot.pdf}
+    \end{subfigure}
+    
+    \vspace{0.4cm} % Optional: Adds a little breathing room between rows
+    
+    % ROW 2
+    \begin{subfigure}[t]{0.48\textwidth}
+        \caption{}
+        \label{fig:supp:power_analysis:start_freq}
+        \vspace{-0.4cm}
+        \hfill
+        \includegraphics[width=0.94\textwidth, trim={0.3cm 0cm 0cm 0.2cm}, clip]{figures/MCC/start_freq_power_plot.pdf}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.48\textwidth}
+        \caption{}
+        \label{fig:supp:power_analysis:rec_rate}
+        \vspace{-0.4cm}
+        \hfill
+        \includegraphics[width=0.94\textwidth, trim={0.3cm 0cm 0cm 0.2cm}, clip]{figures/MCC/rec_rate_power_plot.pdf}
+    \end{subfigure}
+    
+    \vspace{0.4cm}
+    
+    % ROW 3
+    \begin{subfigure}[t]{0.48\textwidth}
+        \caption{}
+        \label{fig:supp:power_analysis:n_loci}
+        \vspace{-0.4cm}
+        \hfill
+        \includegraphics[width=0.94\textwidth, trim={0.3cm 0cm 0cm 0.2cm}, clip]{figures/MCC/n_loci_power_plot.pdf}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.48\textwidth}
+        \caption{}
+        \label{fig:supp:power_analysis:binning}
+        \vspace{-0.4cm}
+        \hfill
+        \includegraphics[width=0.94\textwidth, trim={0.3cm 0cm 0cm 0.2cm}, clip]{figures/MCC/binning_power_plot.pdf}
+    \end{subfigure}
+
+    \vspace{0.4cm}
+
+    % ROW 4 (Centered)
+    \begin{subfigure}[t]{0.48\textwidth}
+        \caption{}
+        \label{fig:supp:power_analysis:n_grid}
+        \vspace{-0.4cm}
+        \hfill
+        \includegraphics[width=0.94\textwidth, trim={0.3cm 0cm 0cm 0.2cm}, clip]{figures/MCC/n_grid_power_plot.pdf}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.48\textwidth}
+    \end{subfigure}
+
+    \caption{\textbf{Detection power across varied parameters and study designs.} 
+    (A) Impact of varying the number of diploid samples per timepoint. 
+    (B) Impact of the number of temporal sampling points. 
+    (C) Effect of the initial allele frequency of selected variant at the onset of sampling.
+    (D) Robustness of the model to the number of linked loci included in the regional genomic context. 
+    (E) Sensitivity to varying background recombination rates. 
+    (F) Impact of spatial/temporal data binning strategies.
+    (G) Effect of the internal computational grid resolution.}
+    \label{fig:supp:power_analysis}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/master_plots/binning_master_plot.pdf}
+\caption{}
+\label{fig:supp:performance:binning}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/master_plots/n_grid_master_plot.pdf}
+\caption{}
+\label{fig:supp:performance:n_grid}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/master_plots/n_loci_master_plot.pdf}
+\caption{}
+\label{fig:supp:performance:n_loci}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/master_plots/rec_rate_master_plot.pdf}
+\caption{}
+\label{fig:supp:performance:rec_rate}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/master_plots/sample_size_master_plot.pdf}
+\caption{}
+\label{fig:supp:performance:sample_size}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/master_plots/start_freq_master_plot.pdf}
+\caption{}
+\label{fig:supp:performance:start_freq}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/master_plots/tpoints_num_master_plot.pdf}
+\caption{}
+\label{fig:supp:performance:tploints_num}
+\end{figure}
+
+\clearpage
+\section{Results for British data}
+
+\begin{figure}[h]
+\centering
+    \includegraphics[width=0.8\textwidth]{figures/real_data_results/region_plots/plot_sel_chr1_rs12062845.pdf}
+    \caption{\textbf{Genomic landscape of the selection signal at the DPYD locus on chromosome 1.}
+    (A) Predicted selection magnitudes generated by \SweepLink.
+    Red points indicate variants classified as target variants under selection ($P=1.0$), while gray points represent neutral variants.
+    The focal variant, rs12062845, is marked by a vertical dotted line.
+    (B)  Local Manhattan plot of GWAS summary statistics from the UK Biobank (Neale lab) for the trait "Waist circumference" (\mbox{OpenGWAS ID: ukb-b-9405}).
+    This trait colocalizes with predicted selection signal (colocalization probability = 0.98). The horizontal dashed line denotes the standard genome-wide significance threshold ($p=5 \times 10^{-8}$).
+    (C) Cumulative recombination landscape (cM) based on the 1000 Genomes Project genetic map for the GBR population.
+    }
+    \label{fig:supp:results:brits_1chr_peak_1}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+    \includegraphics[width=0.8\textwidth]{figures/real_data_results/region_plots/plot_sel_chr2_rs10497813.pdf}
+    \caption{\textbf{Genomic landscape of the selection signal at the RFTN2 locus on chromosome 2.}
+    (A) Predicted selection magnitudes generated by \SweepLink.
+    Red points indicate variants classified as target variants under selection ($P=1.0$), while gray points represent neutral variants.
+    The focal variant, rs1455653, is marked by a vertical dotted line.
+    (B1)  Local Manhattan plot of GWAS summary statistics from the UK Biobank (Neale lab) for the trait "Ankle spacing width" (\mbox{OpenGWAS ID: ukb-b-4080}).
+    This trait colocalizes with predicted selection signal (colocalization probability = 0.97). The horizontal dashed line denotes the standard genome-wide significance threshold ($p=5 \times 10^{-8}$).
+    (B2)  Local Manhattan plot of GWAS summary statistics from the UK Biobank (Neale lab) for the trait "... diagnosed by doctor: Hayfever, allergic rhinitis or eczema" (\mbox{OpenGWAS ID: ukb-b-17241}).
+    This trait colocalizes with predicted selection signal (colocalization probability = 0.84).
+    (C) Cumulative recombination landscape (cM) based on the 1000 Genomes Project genetic map for the GBR population.
+    }
+    \label{fig:supp:results:brits_2chr_peak_2}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+    \includegraphics[width=0.8\textwidth]{figures/real_data_results/region_plots/plot_sel_chr3_rs3773656.pdf}
+    \caption{\textbf{Genomic landscape of the selection signal at the TGFBR2 locus on chromosome 3.}
+    The focal variant targeted by selection at this locus (rs3773656) maps to a known enhancer region.
+    (A) Predicted selection magnitudes generated by \SweepLink.
+    Red points indicate variants classified as target variants under selection ($P=1.0$), while gray points represent neutral variants.
+    (C) Cumulative recombination landscape (cM) based on the 1000 Genomes Project genetic map for the GBR population.
+    }
+    \label{fig:supp:results:brits_3chr_peak_1}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+    \includegraphics[width=0.8\textwidth]{figures/real_data_results/region_plots/plot_sel_chr4_rs11132751.pdf}
+    \caption{\textbf{Genomic landscape of the selection signal at an intergenic region on chromosome 4.}
+    (A) Predicted selection magnitudes generated by \SweepLink.
+    Red points indicate variants classified as target variants under selection ($P=1.0$), while gray points represent neutral variants.
+    The focal variant, rs11132751, is marked by a vertical dotted line.
+    (C) Cumulative recombination landscape (cM) based on the 1000 Genomes Project genetic map for the GBR population.
+    }
+    \label{fig:supp:results:brits_4chr_peak_1}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+    \includegraphics[width=0.8\textwidth]{figures/real_data_results/region_plots/plot_sel_chr5_rs66803649.pdf}
+    \caption{\textbf{Genomic landscape of the selection signal at the PDE4D locus on chromosome 5.}
+    (A) Predicted selection magnitudes generated by \SweepLink.
+    Red points indicate variants classified as target variants under selection ($P=1.0$), while gray points represent neutral variants.
+    The focal variant, rs66803649, is marked by a vertical dotted line.
+    (C) Cumulative recombination landscape (cM) based on the 1000 Genomes Project genetic map for the GBR population.
+    }
+    \label{fig:supp:results:brits_5chr_peak_1}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+    \includegraphics[width=0.8\textwidth]{figures/real_data_results/region_plots/plot_sel_chr5_rs1050152.pdf}
+    \caption{\textbf{Genomic landscape of the selection signal at the SLC22A4/5 locus on chromosome 5.}
+    (A) Predicted selection magnitudes generated by \SweepLink.
+    Red points indicate variants classified as target variants under selection ($P=1.0$), while gray points represent neutral variants.
+    The focal variant, rs1050152, is marked by a vertical dotted line.
+    (B1)  Local Manhattan plot of GWAS summary statistics from the UK Biobank (Neale lab) for the trait "Urate" (\mbox{OpenGWAS ID: ukb-d-30880\_irnt}).
+    This trait colocalizes with predicted selection signal (colocalization probability = 0.98). The horizontal dashed line denotes the standard genome-wide significance threshold ($p=5 \times 10^{-8}$).
+    (B2)  Local Manhattan plot of GWAS summary statistics from the UK Biobank (Neale lab) for the trait "Hand grip strength (left)" (\mbox{OpenGWAS ID: ukb-b-7478}).
+    This trait colocalizes with predicted selection signal (colocalization probability = 0.92).
+    (C) Cumulative recombination landscape (cM) based on the 1000 Genomes Project genetic map for the GBR population.
+    }
+    \label{fig:supp:results:brits_5chr_peak_2}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+    \includegraphics[width=0.99\textwidth]{figures/real_data_results/region_plots/plot_sel_chr6_rs3132718.pdf}
+    \caption{\textbf{Genomic landscape of the selection signal at the MHC region on chromosome~6.}
+    No significant colocalization is found for analyzed traits.
+    (A) Predicted selection magnitudes generated by \SweepLink.
+    Red points indicate variants classified as target variants under selection ($P=1.0$), while gray points represent neutral variants.
+    The focal variant, rs3132718, is marked by a vertical dotted line.
+    (B1)  Local Manhattan plot of GWAS summary statistics from the UK Biobank (Neale lab) for the trait "Non-cancer illness code, self-reported: multiple sclerosis" (\mbox{OpenGWAS ID: ukb-b-17670}).
+    This trait does not colocalize with predicted selection signal (colocalization probability < 0.01). The horizontal dashed line denotes the standard genome-wide significance threshold ($p=5 \times 10^{-8}$).
+    (B2)  Local Manhattan plot of GWAS summary statistics from the UK Biobank (Neale lab) for the trait "Non-cancer illness code, self-reported: psoriasis" (\mbox{OpenGWAS ID: ukb-b-10537}).
+    This trait does not colocalize with predicted selection signal (colocalization probability < 0.01).
+    (C) Cumulative recombination landscape (cM) based on the 1000 Genomes Project genetic map for the GBR population.
+    }
+    \label{fig:supp:results:brits_6chr_peak_1}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+    \includegraphics[width=0.8\textwidth]{figures/real_data_results/region_plots/plot_sel_chr11_rs2403222.pdf}
+    \caption{\textbf{Genomic landscape of the selection signal at the SBF2 and RNF141 loci on chromosome 11.}
+    (A) Predicted selection magnitudes generated by \SweepLink.
+    Red points indicate variants classified as target variants under selection ($P=1.0$), while gray points represent neutral variants.
+    The focal variants, rs2403222 (SBF2) and rs10458931 (RNF141), are marked by a vertical dotted line.
+    (C) Cumulative recombination landscape (cM) based on the 1000 Genomes Project genetic map for the GBR population.
+    }
+    \label{fig:supp:results:brits_11chr_peaks_1_2}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+    \includegraphics[width=0.8\textwidth]{figures/real_data_results/region_plots/plot_sel_chr11_rs7942414.pdf}
+    \caption{\textbf{Genomic landscape of the selection signal at an intergenic region on chromosome 11.}
+    (A) Predicted selection magnitudes generated by \SweepLink.
+    Red points indicate variants classified as target variants under selection ($P=1.0$), while gray points represent neutral variants.
+    The focal variant, rs7942414, is marked by a vertical dotted line.
+    (B)  Local Manhattan plot of GWAS summary statistics from the UK Biobank (Neale lab) for the trait "Wheeze or whistling in the chest in last year" (\mbox{OpenGWAS ID: ukb-b-18335}).
+    This trait colocalizes with predicted selection signal (colocalization probability = 0.94). The horizontal dashed line denotes the standard genome-wide significance threshold ($p=5 \times 10^{-8}$).
+    (C) Cumulative recombination landscape (cM) based on the 1000 Genomes Project genetic map for the GBR population.
+    }
+    \label{fig:supp:results:brits_11chr_peak_3}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+    \includegraphics[width=0.8\textwidth]{figures/real_data_results/region_plots/plot_sel_chr11_rs174550.pdf}
+    \caption{\textbf{Genomic landscape of the selection signal at the FADS1/FADS2 region on chromosome~11.}
+    (A) Predicted selection magnitudes generated by \SweepLink.
+    Red points indicate variants classified as target variants under selection ($P=1.0$), while gray points represent neutral variants.
+    The focal variant, rs174550, is marked by a vertical dotted line.
+    (B1)  Local Manhattan plot of GWAS summary statistics from the UK Biobank (Neale lab) for the trait "Cholesterol" (\mbox{OpenGWAS ID: ukb-d-30690\_raw}).
+    This trait colocalizes with predicted selection signal (colocalization probability = 0.99). The horizontal dashed line denotes the standard genome-wide significance threshold ($p=5 \times 10^{-8}$).
+    (B2)  Local Manhattan plot of GWAS summary statistics from the UK Biobank (Neale lab) for the trait "Red blood cell (erythrocyte) distribution width" (\mbox{OpenGWAS ID: ukb-d-30070\_irnt}).
+    This trait colocalizes with predicted selection signal (colocalization probability = 0.98).
+    (C) Cumulative recombination landscape (cM) based on the 1000 Genomes Project genetic map for the GBR population.
+    }
+    \label{fig:supp:results:brits_11chr_peak_4}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+    \includegraphics[width=0.8\textwidth]{figures/real_data_results/region_plots/plot_sel_chr11_rs12800438.pdf}
+    \caption{\textbf{Genomic landscape of the selection signal at the DHCR7 locus on chromosome 11.}
+    (A) Predicted selection magnitudes generated by \SweepLink.
+    Red points indicate variants classified as target variants under selection ($P=1.0$), while gray points represent neutral variants.
+    The focal variant, rs12800438, is marked by a vertical dotted line.
+    (B)  Local Manhattan plot of GWAS summary statistics from the UK Biobank (Neale lab) for the trait "Vitamin D" (\mbox{OpenGWAS ID: ukb-d-30890\_irnt}).
+    This trait colocalizes with predicted selection signal (colocalization probability = 0.99). The horizontal dashed line denotes the standard genome-wide significance threshold ($p=5 \times 10^{-8}$).
+    (C) Cumulative recombination landscape (cM) based on the 1000 Genomes Project genetic map for the GBR population.
+    }
+    \label{fig:supp:results:brits_11chr_peak_5}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+    \includegraphics[width=0.8\textwidth]{figures/real_data_results/region_plots/plot_sel_chr15_rs12913832.pdf}
+    \caption{\textbf{Genomic landscape of the selection signal at the HERC2 locus on chromosome 15.}
+    (A) Predicted selection magnitudes generated by \SweepLink.
+    Red points indicate variants classified as target variants under selection ($P=1.0$), while gray points represent neutral variants.
+    The focal variant, rs12913832, is marked by a vertical dotted line.
+    (B)  Local Manhattan plot of GWAS summary statistics from the UK Biobank (Neale lab) for the trait "Skin colour" (\mbox{OpenGWAS ID: ukb-b-19560}).
+    This trait colocalizes with predicted selection signal (colocalization probability = 0.94). The horizontal dashed line denotes the standard genome-wide significance threshold ($p=5 \times 10^{-8}$).
+    (C) Cumulative recombination landscape (cM) based on the 1000 Genomes Project genetic map for the GBR population.
+    }
+    \label{fig:supp:results:brits_15chr_peak_1}
+\end{figure}
+
+\bibliography{sample}
+
+\end{document}
