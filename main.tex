@@ -93,6 +93,9 @@
 % table rules
 \usepackage{booktabs}
 
+% table resize
+\usepackage{graphics}
+
 % authors and affiliations
 \usepackage{authblk}
 
@@ -105,15 +108,15 @@
 \newcommand{\CLUES}{\texttt{CLUES2}\xspace}
 \newcommand{\timesweeper}{\texttt{timesweeper}\xspace}
 
-\title{SweepLink: Joint Inference of Demography and Linked Selection from Time-series Data}
-\author[1,2,3]{Ekaterina Noskova}
-\author[1,2]{Madleina Caduff}
-\author[1,2]{Andreas Fueglistaler}
-%\author{Anna Parker}?
-\author[3]{Christoph Leuenberger}
-\author[1,2]{Daniel Wegmann}
+\title{SweepLink: Joint Inference of Demography and Linked~Selection from Time-series Data}
+\author[1,2,3]{Ekaterina~Noskova}
+\author[1,2]{Madleina~Caduff}
+\author[1,2]{Andreas~Fueglistaler}
+\author[1]{Anna Parker}
+\author[3]{Christoph~Leuenberger}
+\author[1,2]{Daniel~Wegmann}
 
-\affil[1]{ Department of Biology, University of Fribourg, 1700 Fribourg, Switzerland}
+\affil[1]{Department of Biology, University of Fribourg, 1700 Fribourg, Switzerland}
 \affil[2]{Swiss Institute of Bioinformatics, 1700 Fribourg, Switzerland }
 \affil[3]{Institute of Ecology and Evolution, University of Edinburgh, EH9 3DW Edinburgh, United Kingdom}
 \affil[4]{Department of Mathematics, University of Fribourg, 1700 Fribourg, Switzerland}
@@ -122,22 +125,22 @@
 \maketitle
 \linenumbers
 
-\begin{abstract}
-Time-series data---allele frequency trajectories tracked across multiple sampling times---are among the richest sources of information for inferring directional selection.
-When a beneficial allele rises in frequency, it also drags the frequency of nearby loci upward due to linkage---an effect known as genetic hitchhiking.
-Yet most existing selection-inference tools are single-locus methods that treat loci as independent, ignoring this linkage structure: they infer site-specific selection coefficients in isolation and then rely on ad hoc, window-based statistics to account for hitchhiking.
-Many of these tools further require a predefined effective population size, and the few that jointly infer demography and selection do not scale beyond a small, pre-selected set of loci.
-We present \SweepLink, a two-layer Hidden Markov Model that overcomes both limitations, jointly inferring demography and linked selection genome-wide by coupling a spatial layer, which captures correlations between selection coefficients at neighboring loci, with a temporal layer based on a fast Wright-Fisher diffusion model.
-On simulated data, \SweepLink substantially increases sensitivity to weak and moderate selection while matching existing tools' power to detect strong selection.
-By pooling evidence across the genome, \SweepLink pushes isolated variants whose signal merely mimics selection through genetic drift toward neutrality, while reinforcing loci with support from their genomic neighbours toward confident selection calls.
-This yields posterior probabilities confident enough that, in practice, accuracy remains stable even at maximal confidence, removing the need for arbitrary significance thresholds.
-We then applied \SweepLink to ancient DNA time-series data from the British population previously analysed with the single-locus tool \bmws.
-\SweepLink recovers three of the previously reported selection signals (LCT, DHCR7, HERC2) and partially recovers the signal within the MHC/HLA region, but does not replicate the previously reported signal at SLC45A2. 
-By pooling signal from linked neighbouring variants, it further identifies additional candidate regions---including DPYD and FADS1/FADS2---missed by the prior single-locus scan but supported by independent studies.
+\begin{abstract} % should be below 250 words
+Genome-wide time-series data---allele frequency trajectories tracked across multiple sampling times---are among the richest sources of information for inferring selection.
+Beyond a beneficial allele's own rise in frequency, such data capture how it drags nearby loci upward via linkage---an effect known as genetic hitchhiking.
+Yet most existing tools are single-locus, treating loci independently: they infer site-specific selection coefficients in isolation, then rely on ad hoc window statistics to account for hitchhiking.
+Many further require a predefined population size, or scale poorly when jointly inferring demography, and their power is highly sensitive to a significance threshold unknowable in advance.
+We present \SweepLink, a two-layer Hidden Markov Model that overcomes these limitations by jointly inferring demography and linked selection genome-wide: a spatial layer captures correlations between neighboring selection coefficients, coupled with a temporal Wright-Fisher diffusion layer.
+On simulated data, \SweepLink increases sensitivity to weak and moderate selection while matching existing tools' power to detect strong selection.
+By pooling genome-wide evidence, it pushes drift-driven false signals toward neutrality while reinforcing loci with neighbouring support.
+This yields confident posteriors that, in practice, remain stable at maximal significance, removing the need for arbitrary thresholds.
+We applied \SweepLink to ancient DNA time-series data from the British population, previously analysed with a single-locus tool.
+\SweepLink recovers four of the previously reported signals (LCT, SLC45A2, DHCR7, HERC2), and partially recovers the MHC/HLA signal.
+It also identifies additional candidate regions---including DPYD, FADS1/2 and OAS1---missed by the prior scan but supported by independent studies.
 \end{abstract}
 
-\section{Introduction}
 
+\section{Introduction}
 
 Inference of natural selection is a fundamental task in population genetics.
 Selective signals provide critical information about the adaptive processes that have shaped biological populations.
@@ -157,9 +160,9 @@ Despite their different strategies for handling demography and computational sca
 By evaluating each site in isolation, they assume that loci evolve independently and thereby ignore the broader genomic context.
 This assumption fails to account for the "hitchhiking effect", where selection acting on a causal variant also influences the frequencies of nearby loci.
 It has been demonstrated through extensive simulations that ignoring such linked selection leads to significantly biased estimates of selection coefficients \citep{he2020}.
-While the method developed in \citep{he2020} can accurately disentangle selection at two linked sites, it is not scalable to large-scale genomic data.
-One of the first approaches to analyze multiple linked sites jointly was introduced in \citep{terhorst2015}, which utilizes a Gaussian process to approximate the multi-locus Wright-Fisher model.
-This method captures the linkage-induced correlation between sites through the covariance structure of the Gaussian process, though it is primarily focused on low-order interactions.
+While the method developed in \citep{he2020} can accurately disentangle selection at two linked sites, it does not extend beyond a pair of loci.
+One of the first approaches to jointly analyze many linked sites was introduced by \citet{terhorst2015}, which uses a Gaussian process to approximate the multi-locus Wright-Fisher model, capturing linkage-induced correlations between sites through its covariance structure.
+However, its quadratic runtime in the number of jointly modeled loci confines inference to small local windows rather than the full genomic landscape.
 Another alternative is \CLUES\citep{vaughn2024}, which leverages Ancestral Recombination Graphs (ARGs) to account for linkage, but the computational cost of inferring these genealogies remains a major bottleneck.
 Finally, machine learning tools like \timesweeper~\citep{whitehouse2023} scan the genome in windows but require extensive forward-in-time simulations, which are impractical for human populations with large effective population sizes.
 
@@ -167,7 +170,7 @@ To address these limitations, we present \SweepLink, a novel method for the join
 By incorporating an additional genome-wide layer within its HMM framework, \SweepLink captures correlations between loci, leveraging this linkage to improve selection inference.
 Our experiments on simulated data demonstrate that \SweepLink produces a higher sensitivity to weak selection compared to standard single-locus tools.
 Moreover, by pooling evidence of selection across the genomic landscape, our method produces more confident posterior probabilities, eliminating the need for arbitrary empirical thresholds to distinguish true from false selective sweeps.
-Applying \SweepLink to time-series data from British populations, we recover more known targets of historical adaptation than single-locus methods and identify several novel candidate regions.
+Applying \SweepLink to time-series data from British populations, we recover more known targets of historical adaptation than single-locus method and identify several novel candidate regions.
 Although this study focuses on a single-population scenario, the \SweepLink methodology and implementation are developed for multiple populations.
 
 
@@ -177,16 +180,8 @@ Although this study focuses on a single-population scenario, the \SweepLink meth
 
 \SweepLink is a probabilistic modeling framework designed to jointly infer population sizes, migration rates, and linked selection from time-series allele frequency data.
 The method is structured as a two-layer Hidden Markov Model (HMM), illustrated in Figure~\ref{fig:methods:workflow}A.
-The first \textbf{spatial layer} models selection coefficients along the genome and accounts for the linkage between adjacent loci through the transition matrix $Q$.
+The first \textbf{spatial layer} models selection coefficients along the genome and accounts for their correlation between adjacent loci through the transition matrix $Q$.
 The \textbf{temporal layer} incorporates a diffusion approximation of the Wright-Fisher model to calculate the likelihood of the evolutionary parameters.
-
-The temporal layer itself resembles single-locus methods, such as \ApproxWF or \linebreak \diplolocus, which utilize Wright-Fisher model within the HMM framework.
-The spatial layer is the defining feature of \SweepLink that distinguishes it from these approaches.
-The ladder-type transition matrix $Q$ defines the hidden process of how selection varies along the genome.
-Its parameters constrain adjacent loci to share similar selection coefficients while assuming that the vast majority of the genome evolves neutrally.
-This joint HMM framework allows us to use the Metropolis-Hastings Markov Chain Monte Carlo (MCMC) method to infer the parameters of the transition matrix $Q$, the selection coefficients $\mathbf{S}_l$ along the genome, and the demographic parameters $(\mathbf{N}, \mathbf{m})$ directly from the genetic data.
-
-By capturing the linkage between adjacent loci, \SweepLink models the hitchhiking effect, suppresses isolated false-positive signals caused by genetic drift, and pools signals to form distinct, high-confidence selection peaks (Figure~\ref{fig:methods:workflow}B).
 
 \begin{figure}[htbp]
 \centering
@@ -201,16 +196,24 @@ Unlike single-locus methods (top) that are susceptible to noise from genetic dri
 \label{fig:methods:workflow}
 \end{figure}
 
+The temporal layer itself resembles single-locus methods, such as \ApproxWF or \linebreak \diplolocus, which utilize Wright-Fisher model within the HMM framework.
+The spatial layer is the defining feature of \SweepLink that distinguishes it from these approaches.
+The ladder-type transition matrix $Q$ defines the hidden process of how selection varies along the genome.
+Its parameters constrain adjacent loci to share similar selection coefficients while assuming that the vast majority of the genome evolves neutrally.
+This joint HMM framework allows us to use the Metropolis-Hastings Markov Chain Monte Carlo (MCMC) method to infer the parameters of the transition matrix $Q$, the selection coefficients $\mathbf{S}_l$ along the genome, and the demographic parameters $(\mathbf{N}, \mathbf{m})$ directly from the genetic data.
+
+By capturing the correlation of selection coefficients between adjacent loci, \SweepLink models the hitchhiking effect, suppresses isolated false-positive signals caused by genetic drift, and pools signals to form distinct, high-confidence selection peaks (Figure~\ref{fig:methods:workflow}B).
+
 \subsection{Time-Series Data and Underlying Demographic Model}
 
 We first formalize the notation of the input genetic data and the baseline demographic assumptions.
 Consider a dataset containing $L$ biallelic variants (SNPs) across the genome.
 The physical distance between locus $l$ and locus $l-1$ is denoted as $d_l$.
 We have samples at $K + 1$ distinct historical time points defined as $\{t_0 < t_1 < \ldots < t_K\}$.
-Genetic data is presented for $P$ populations, and $n_{p, k}$ haploid individuals are sampled for population $p$ at time point $t_k$.
+Genetic data is presented for $P$ populations, and $n_{p, k}$~diploid individuals are sampled for population $p$ at time point $t_k$.
 For each locus $l \in \{1, \dots, L\}$ at a given time point $t_k$, the genetic data consists of observed allele counts.
-We denote this data as $\mathbf{C}^l(t_k) = \{(c^l_{p,k}, n^l_{p,k}),\ p \in \{1, \dots P\}\}$, where $c^l_{p,k}$ refers to the number of observed derived alleles and $n^l_{p,k}$ is the total number of haploid samples covering that specific locus.
-We note that $n^l_{p,k} \leq n_{p,k}$ to account for any missing data at individual sites.
+We denote this data as $\mathbf{C}^l(t_k) = \{(c^l_{p,k}, 2n^l_{p,k}),\ p \in \{1, \dots P\}\}$, where $c^l_{p,k}$ refers to the number of observed derived alleles and $2n^l_{p,k}$ is the total number of haploid samples covering that specific locus.
+We note that $n^l_{p,k}$ can be less or equal to number of diploid samples $n_{p,k}$ as missing data can occur at individual sites.
 
 We assume these $P$ populations evolve according to structured population model, where each population $p$ maintain a constant effective size of $2N_p$ haploid individuals.
 To account for historical admixture, we model continuous migration between all pairs of populations via a constant migration matrix, where $m_{pq}$ denotes the continuous migration rate from population $q$ into population $p$.
@@ -220,7 +223,9 @@ To account for historical admixture, we model continuous migration between all p
 When a beneficial allele emerges in a population and increases in frequency, the allele trajectories of nearby segregating loci are also affected.
 If the causal beneficial allele is in linkage disequilibrium with the derived allele of a neighboring locus, that passenger derived allele will hitchhike and correspondingly increase in frequency.
 Conversely, if the beneficial variant is linked to the ancestral allele, the derived allele will decrease in frequency, generating an allele trajectory that mimics the signature of negative selection.
-Under the Wright-Fisher model, if a focal allele experiences a selection coefficient $s$, the corresponding alternative allele experiences an inverse selective pressure defined as $s_{inv} = \frac{-s}{1+s}$.
+Under the Wright-Fisher model, if a focal allele experiences a selection coefficient $s$, the corresponding alternative allele experiences an inverse selective pressure defined as:
+$$s_{inv} = \frac{-s}{1+s}.$$
+
 Recombination breaks down this linkage disequilibrium.
 As the physical distance from the causal variant increases, this breakdown of linkage causes the population-level data to show a progressively lower selection coefficient at neighboring loci.
 As a result, the selection footprint forms a distinct peak, characterized by high absolute selection coefficients near the causal variant that decline toward neutrality farther away.
@@ -233,11 +238,11 @@ We assume each $S_p(l)$ evolves as the independent Markov process.
 Therefore, we omit the subscript $ p $ for the remainder of this section and describe the process generically for $S(l)$.
 
 To represent selection magnitudes, we define a discrete grid of absolute values $G = \{0, s_1, s_2, \dots, s_M\}$.
-Using the inverse selective pressure logic established previously, we conceptually extend this positive grid to include corresponding negative values:
+Using the inverse selection definition described above, we extend this positive grid to include corresponding negative values:
 \begin{equation}\label{eq:sel_grid}
-S(l) \in \left\{ - \frac{s_{MAX}}{1+s_{M}}, \dots,  - \frac{s_2}{1+s_2}, - \frac{s_1}{1+s_1}, 0, 0, s_1, s_2, \dots, s_{M}\right\}.
+S(l) \in \left\{ - \frac{s_{MAX}}{1+s_{M}}, \dots,  - \frac{s_2}{1+s_2}, - \frac{s_1}{1+s_1}, -0, +0, s_1, s_2, \dots, s_{M}\right\}.
 \end{equation}
-Two neutral states ($0$) are explicitly retained to maintain balance in the MCMC proposal mechanism.
+Two neutral states ($-0$, $+0$) are explicitly retained to maintain balance in the MCMC proposal mechanism.
 
 The state $S(l)$ is decomposed into a direction component $D(l) \in \{+1, -1\}$ and an absolute magnitude component $Z(l) \in G$, as:
 $$
@@ -248,8 +253,8 @@ Z(l), & \text{if } D(l) = +1, \\\\
 $$
 
 Components $D(l)$ and $Z(l)$ are modelled as two independent Markov chains.
-The $D_p(l)$ process has equal probabilities of transitioning between two states, as there is no prior on linkage sign.
-The absolute value of selection $Z_p(l)$ lies within grid $G = \{0, s_1, s_2, \dots, s_{M}\}$.
+The $D(l)$ process has equal probabilities of transitioning between two states, as there is no prior on linkage sign.
+The absolute value of selection $Z(l)$ lies within grid $G = \{0, s_1, s_2, \dots, s_{M}\}$.
 The transition matrix of this Markov model is inspired by \citet{galimberti2020} and is defined as:
 $$Q(d_l) = \exp(d_l \cdot \Lambda),$$
 with elements $[Q(d_l)]_{ij}$ denoting the probability of going from state $s_i$ at locus $l-1$ to state $s_j$ at locus $l$ with distance $d_l$ between those loci, either in physical or in recombination space.
@@ -282,7 +287,7 @@ $$ P(S(l) \mid S(l-1)) = P(D(l) \mid D(l-1)) \cdot P(Z(l) \mid Z(l-1)) = 0.5 \cd
 
 Therefore, the probability of a proposed sequence of selection coefficients $ \mathbf{S} = (\mathbf{S}(1), \dots, \mathbf{S}(L)) $ given matrix $Q$ is proportional to:
 \begin{equation}\label{eq:spatial_transition}
-P(\mathbf{S} \mid Q) \propto P(\mathbf{Z} \mid Q) = P(Z(1)) \prod_{l=2}^L \big[Q(d_l)\big]_{Z(l-1), Z(l)},
+P(\mathbf{S} \mid Q) \propto P(\mathbf{Z} \mid Q) = P(Z(1)) \prod_{l=2}^L \big[Q(d_l)\big]_{Z(l-1), Z(l)}
 \end{equation}
 where the probability of the initial state $P(Z(1))$ operates as the stationary distribution of the generator matrix $ \Lambda $.
 
@@ -300,7 +305,7 @@ To compute the likelihood of observed allele counts $\mathbf{C}(t)$ at the locus
 \begin{equation*}\label{eq:binomial}
 \mathcal{B}(\mathbf{c}_k \mid \mathbf{x}_k) :=
 \mathbb{P} \big[ \mathbf{C}(t_k) = \mathbf{c}_k \,\big|\, \mathbf{X}(t_k) = \mathbf{x}_k \big] =
-\prod_{p=1}^P \binom{n_{pk}}{c_{pk}}\, x_{pk}^{c_{pk}}\, (1-x_{pk})^{n_{pk}-c_{pk}}.
+\prod_{p=1}^P \binom{2n_{pk}}{c_{pk}}\, x_{pk}^{c_{pk}}\, (1-x_{pk})^{2n_{pk}-c_{pk}}.
 \end{equation*}
 
 Briefly, Wright-Fisher diffusion is a continuous-time continuous state Markov process.
@@ -336,9 +341,9 @@ Once the forward pass reaches the final sampling time point $t_K$, the total lik
 \begin{equation}\label{eq:spatial_emission}
 \mathbb{P}(C(t_0)=c_0, \dots, C(t_K) = c_K \mid \mathbf{S}, \mathbf{N}, \mathbf{m}) = \int_{(0, 1)^P} \alpha_K(0, \mathbf{y})\, d\mathbf{y}.
 \end{equation}
-Because evaluating these multidimensional PDEs analytically is broadly intractable, we discretize the state space and solve the forward operator numerically using the Chang-Cooper numerical scheme (for more details see Supplementary Note X).
-We implement several types of grid for the relative allele frequency space in Hidden Diffusion and empirically test them.
-Chebyshev grid provides the most robust likelihood surfaces across diverse sampling regimes (see Supplementary Note X and Figure SX).
+Because evaluating these multidimensional partial differential equations analytically is broadly intractable, we discretize the state space and solve the forward operator numerically using the Chang-Cooper numerical scheme~\cite{chang1970,pareschi2018} and alternating direction method~\cite{press2007} (for more details see Supplementary Note X).
+We implement several types of grid~\citep{gutenkunst2009,cheng2025, malaspinas2012} for the relative allele frequency space in Hidden Diffusion and empirically test them.
+Chebyshev grid provides the most robust performance (see Supplementary Note X and Figure SX).
 
 \subsection{Bayesian Inference and Parameter Estimation}
 
@@ -353,35 +358,45 @@ $$
 Here, the locus-specific emission probability $P(\mathbf{C}(l) \mid \mathbf{S}(l), \mathbf{N}, \mathbf{m})$ is defined by Equation~\ref{eq:spatial_emission}, the probability of drawn selection coefficients $P(\mathbf{S} \mid Q_{\boldsymbol{\kappa}, \boldsymbol{\nu}, \boldsymbol{\mu}})$ is defined by Equation~\ref{eq:spatial_transition}, and $P(\boldsymbol{\kappa}, \boldsymbol{\nu}, \boldsymbol{\mu}, \N, \m)$ evaluates as the combined product of the independent parameter priors.
 
 We utilize a Markov chain Monte Carlo (MCMC) algorithm to draw representative samples directly from this posterior distribution.
-Specifically, we execute a Metropolis-Hastings sampling scheme that iteratively proposes new parameter values and hidden states, accepting or rejecting them based on the evaluated ratios of this unnormalized posterior distribution.
+Specifically, we execute a Metropolis-Hastings sampling\linebreak scheme~\citep{metropolis1953,hastings1970} that iteratively proposes new parameter values and hidden states, accepting or rejecting them based on the evaluated ratios of this unnormalized posterior distribution.
+
+\bigskip
 
 To translate the resulting MCMC trace into quantitative evidence for selection at any given locus, we approximate the marginal posterior probabilities directly from the parameter samples. 
-Let $ W $ be the total number of retained MCMC iterations after burn-in. 
-For any specific selection coefficient $ s $ on the fully signed discrete grid, its estimated posterior probability is calculated as its sample frequency, utilizing a smoothing correction defined as $ N_s / (W + 1) $, where $ N_s $ is the number of MCMC samples yielding state $ s $.
-We then calculate the overarching posterior probability of positive selection, $ P(s > 0) $, by summing these estimates across all strictly positive states on the grid, and similarly compute the probability of negative selection, $ P(s < 0) $, across all strictly negative states.
+Let $W$ be the total number of MCMC samples. 
+For any specific selection coefficient $s$ on the fully signed discrete grid, its estimated posterior probability is calculated as its sample frequency, utilizing a smoothing correction defined as $ X_s / (W + 1) $, where $ X_s $ is the number of MCMC samples yielding state $ s $.
+We then calculate the posterior probability $P(s > 0)$ of positive selection, and probability $P(s < 0)$ of negative selection by summing these estimates across all strictly positive and strictly negative states on the grid.
 Finally, to summarize the model's overall confidence in directional selection, we define our primary classification score as:
 \begin{equation}\label{eq:final_posterior}
     P = \max(P(s > 0), P(s < 0)).
 \end{equation}
 This value serves as \SweepLink’s primary statistic to distinguish between neutral variants and selective sweeps.
 
+\subsection{Implementation}
+
+The proposed model and the Bayesian inference scheme are implemented in an easy-to-use C++ program \SweepLink, available at \url{https://bitbucket.org/wegmannlab/sweeplink/}.
+We provide complementary Python 3 scripts to process VCF files into \SweepLink input and to post-process \SweepLink output, including plotting of the results.
+Detailed documentation and a tutorial can be found at \url{https://sweeplink.readthedocs.io}.
+
 \subsection{Benchmarking Against Competitor Single-Locus Tools}
 
 To perform a benchmark analysis of \SweepLink, we generate a simulated dataset using the forward-in-time simulator SLiM v4~\citep{haller2023}.
-We generate ten chromosomes, each with a length of 0.1~Mb.
-Half of chromosomes containe only neutral mutations.
+We generate ten short chromosomes, each with a length of 0.1~Mb.
+Half of chromosomes contain only neutral mutations.
 The remaining five chromosomes have a hard selective sweep introduced at the middle position, with a selection coefficient equal to $0.01$, $0.02$, $0.03$, $0.04$, or $0.05$, respectively.
-Population parameters are chosen to resemble realistic human populations: population size was set to $N=10{,}000$ individuals~\citep{takahata1993}, mutation rate to $\mu_{aA} = 10^{-8}$ per site per generation, and recombination rate to $r=10^{-8}$~cM per~Mb.
+Population parameters are chosen to resemble realistic human populations: population size was set to $N=10{,}000$ individuals~\citep{takahata1993}, mutation rate to $\mu_{aA} = 10^{-8}$ per site per generation~\citep{kong2012}, and recombination rate to $r=10^{-8}$~per site per generation~\citep{kong2002}.
 
 Sampling is performed once the selected allele reaches a frequency of 30\%.
 Genetic data are sampled at $K=11$ consecutive time points, with $\Delta t=16$ generations between each, thereby spanning 160 generations.
 This sampling regime reflects the real human data analyzed in this study, which includes samples dating approximately 4,000 years before present.
 At each time point, genetic data for $n=25$ diploid individuals were sampled.
-To generate the robust benchmark dataset, this entire simulation setup was replicated 100 independent times, yielding a total dataset of exactly 500 independent selective sweeps (100 for each selection coefficient) against a background of over 100,000 strictly neutral variants unlinked to the targets of selection.
+To generate the robust benchmark dataset, this entire simulation setup was replicated 100 independent times, yielding a total dataset of exactly 500 independent selective sweeps (100 for each selection coefficient) against a background of over 100,000 strictly neutral variants unlinked to the targets of selection. We filtered the dataset to retain only sites where the allele is segregating at a minimum of two sampled time points; as shown in the Supplementary Material, this filter does not affect inference accuracy but substantially reduces runtime.
+We filtered the dataset to retain only sites where the derived allele segregates at a minimum of two sampled time points, removing on average ~21\% of variants.
+As shown in the Supplementary Material, this filter does not affect inference accuracy but substantially reduces runtime.
 
-We evaluate the performance of \SweepLink against three established single-locus tools: \ApproxWF, \diplolocus, and \bmws.
+We evaluate the performance of \SweepLink against three established single-locus tools:\linebreak\ApproxWF~\citep{ferrer2016}, \diplolocus~\citep{cheng2025}, and \bmws~\citep{mathieson2022}.
 To ensure a fair comparison, the true simulated effective population size ($ N=10{,}000 $) is explicitly provided as a fixed, known value to all methods.
-\SweepLink is launched with 50 grid points for the numerical scheme of the diffusion equation and a discrete selection grid of 13 states for positive selection magnitudes: $G = \{0.0, 0.005, 0.010, 0.015, 0.020, 0.025, 0.030, 0.035, 0.040, 0.045, 0.050, 0.055, 0.060\}$.
+\SweepLink is launched with 50 grid points for the numerical scheme of the diffusion equation and a discrete selection grid of 13 states for positive selection magnitudes from $0.0$ to $0.06$ with a step size of $0.005$.
 This grid is extended in \SweepLink to include corresponding negative selection values following Equation~\ref{eq:sel_grid}.
 The same complete grid is used for the maximum-likelihood approach in \diplolocus, which calculates the likelihood values across the grid and then interpolates them to find the off-grid maximum.
 We run \ApproxWF and \bmws with default parameters as recommended in their documentation.
@@ -393,7 +408,7 @@ Because random genetic drift generates background noise, raw quantitative estima
 Instead, the raw outputs of the selection from tools must be further processed to produce scores that quantify the evidence for selection.
 Once these scores are obtained, a formal discovery threshold is applied to binarily classify each locus as either strictly neutral or under directional selection.
 
-We extract specific metrics from each tool as scores for the classsification task.
+We extract specific metrics from each tool as scores for the classification task.
 For \diplolocus, we directly utilize the $p$-value derived from its likelihood ratio test. 
 For \bmws, we follow the statistical framework described in its original publication~\citet{mathieson2022}.
 We aggregate single-locus selection estimations within sliding windows of 20 SNPs, approximate a gamma distribution, and derive a $p$-value by testing whether the window estimation deviates from this distribution.
@@ -486,15 +501,15 @@ Both \ApproxWF and \bmws exhibit sharp, fragile performance peaks at relatively 
 For instance, \ApproxWF reached its maximum performance (MCC = 0.85) at a posterior probability of 0.90, but its detection power collapsed relatively steeply under stricter criteria.
 Similarly, \bmws peaked at MCC of 0.71 ($p = 2.8 \times 10^{-3}$) before experiencing a steady decline.
 
-\begin{figure}[b]
+\begin{figure}[t]
 \centering
 \includegraphics[width=0.55\textwidth]{figures/MCC/comparison_power_plot.pdf}
 \caption{\textbf{Power to detect selective sweeps across discovery thresholds.}
-\SweepLink (blue) is run for 100,000 MCMC samples with an extended version "\SweepLink (1M)" (light blue) run for 1 million samples.
+\SweepLink (blue) is run for 100,000 MCMC samples with an extended version \SweepLink \texttt{(1M)} (light blue) run for 1 million samples.
 The x-axis displays native $p$-values (\diplolocus, \bmws) or $1-P$ (\SweepLink, \ApproxWF), where $P = \max(P(s>0), P(s<0))$.
 Markers denote peak MCC.
 Unlike standard methods, \SweepLink receives peak accuracy on maximum possible threshold ($P=1.0 - 10^{-5}$) in its default run.
-The extended run of \SweepLink for 1 million samples demonstrate the best MCC score and shows stable plateaux on for the range of the stringent thresholds ($P > 1 - 10^{-4}$).
+The extended run of \SweepLink \texttt{(1M)} for 1 million samples demonstrate the best MCC score and shows stable plateaux on for the range of the stringent thresholds ($P > 1 - 10^{-4}$).
 }
 \label{fig:results:mcc_plot}
 \end{figure}
@@ -504,20 +519,21 @@ Because this optimal threshold is unknown in real empirical applications, resear
 However, imposing these stricter thresholds causes a steady degradation in detection power.
 Consequently, at the high stringencies typically required for genome-wide scans ($\sim10^{-7}$), the classification accuracy of \diplolocus quickly drops below the stable performance maintained by \SweepLink.
 
-In stark contrast, \SweepLink achieved the best MCC score ($0.89$) among tested tools for the extended MCMC chain of 1 million samples and a score of $0.85$ for default chain of 100,000 samples.
+\SweepLink achieved the best MCC score ($0.89$) among tested tools for the extended MCMC chain of 1 million samples and a score of $0.85$ for default chain of 100,000 samples.
 More importantly, our results show the stable performance across the entire high-confidence domain ($1-P < 10^{-4}$).
 For the default run, \SweepLink reached its optimal performance at the theoretical limit of maximum confidence level ($1-P = 10^{-5}$).
 As detailed in subsequent experiments, this robust plateau with peak at maximum threshold is consistently maintained across diverse evolutionary scenarios, bounded only by the fundamental limits of genetic linkage (Figure~\ref*{fig:supp:power_analysis}).
 Specifically, under extreme recombination rates ($r \ge 10^{-6}$ relative to a mutation rate of $10^{-8}$), the physical footprint of a sweep becomes too narrow to provide a meaningful regional context.
 In these isolated cases, the performance of \SweepLink converges toward single-locus behaviour, exchanging its high-confidence plateau for a distinct performance peak at more lenient thresholds (Figure~\ref*{fig:supp:power_analysis:rec_rate}).
+% TODO: below to discussion?
 However, because such extreme recombination regimes represent only a small fraction of typical genomes, \SweepLink remains uniquely suited for general ``out-of-the-box'' empirical scans.
 Researchers can simply demand maximum statistical certainty to achieve optimal detection power, without sacrificing true positive discoveries or risking an inflated false-positive rate.
 
 
 \subsection{Sweep Detection Sensitivity and Estimation Accuracy}
 
-To explicitly evaluate and compare detection sensitivity specifically for each selection coefficient, we aligned all tools to an identical, highly conservative empirical False Positive Rate (FPR = 0.03\%).
-This specific threshold corresponds to the baseline error rate achieved by \SweepLink at the threshold of absolute certainty ($P=1.0$).
+To explicitly evaluate and compare detection sensitivity specifically for each selection coefficient, we aligned all tools to an identical, highly conservative empirical False Positive Rate (FPR = 0.05\%).
+This specific threshold corresponds to the baseline error rate achieved by \SweepLink at the threshold of absolute certainty ($1 - P=10^{-5}$).
 We evaluated the detection rate---the percentage of loci identified as being selected by each tool---across strictly neutral sites ($s=0.0$) and five distinct categories of positive selection ($s \in \{0.01, 0.02, 0.03, 0.04, 0.05\}$).
 Results are presented in Figure~\ref{fig:results:tools_comparison}A.
 While all methods successfully identified strong selective sweeps ($s \ge 0.03$), \SweepLink demonstrated vastly superior sensitivity for weak selection.
@@ -525,7 +541,7 @@ For instance, \SweepLink successfully recovered 10\% of the weakest sweeps ($s =
 
 \begin{figure}[tb]
 \centering
-\includegraphics[width=0.8\textwidth]{figures/master_plots/comparison_master_plot.pdf}
+\includegraphics[width=0.8\textwidth]{figures/master_plots/comparison_master_plot_no1M_with_round2.pdf}
 \caption{\textbf{Performance and estimation accuracy for selection detection tools.}
 \textbf{(A)}~Sweep detection rates across delection coefficients evaluated at a matched False Positive Rate (FPR) of 0.03\% (the empirical FPR of \SweepLink at $P=1.00$).
 \SweepLink uniquely retains sensitivity for weak selection ($s=0.01$).
@@ -654,35 +670,105 @@ Overall, our scan identified X novel candidate regions under selection that were
 
 \begin{table}[htbp]
     \centering
-    \caption{Regions and target variants exhibiting signatures of directed selection.
-    Selection coefficients ($s$) represent the predicted magnitude of selection for the derived allele.
-    }
+    \caption{Regions under directed selection with colocalising trait associations.
+    Selection coefficients ($\hat{s}$) refer to the derived allele, polarised against
+    the Ensembl GRCh37 ancestral reconstruction; variants are written as
+    ancestral\textgreater derived. ``Loci'' is the number of variants in the region
+    at which all $10^5$ MCMC iterations agreed on the sign of $s$. PP$_4$ is the
+    posterior probability that the selection and trait signals share a causal variant.}
     \label{tab:selected_variants}
-    \begin{tabular}{crrrrr}
+    \resizebox{\columnwidth}{!}{%
+    \begin{tabular}{c r r l l r l r}
         \toprule
-        \textbf{Chr} & \textbf{Start (hg19)} & \textbf{End (hg19)} & \textbf{Target Variant} & \textbf{Gene} & \textbf{$\hat{s}$} \\
+        & \multicolumn{5}{c}{\textbf{Selection}} & \multicolumn{2}{c}{\textbf{Colocalisation}} \\
+        \cmidrule(lr){2-6} \cmidrule(lr){7-8}
+        \textbf{Chr} & \textbf{Region (Mb)} & \textbf{Loci} & \textbf{Target variant} &
+        \textbf{Gene} & \textbf{$\hat{s}$} & \textbf{Trait} & \textbf{PP$_4$} \\
         \midrule
-        1 & $98{,}002{,}279$ & $99{,}242{,}320$ & rs12062845 C\textgreater A & DPYD & $-0.0163$ \\
-        2 & $134{,}842{,}307$ & $13{,}7110{,}579$ & rs4988235 G\textgreater A & LCT/MCM6 & $0.0355$ \\
-        2 & $197{,}990{,}527$ & $198{,}961{,}920$ & rs1455653 G\textgreater A & RFTN2 & $0.0153$ \\ % <-- Enhancer
-        2 & $221{,}642{,}941$ & $222{,}053{,}859$ & rs830747 G\textgreater A & (EPHA4) & $0.0147$ \\ % <-- New variant from 2025 paper 
-        3 & $30{,}698{,}096$ & $30{,}859{,}658$ & rs3773656 A\textgreater G & TGFBR2 & $-0.0150$ \\ % <-- Enhancer
-        %3 & $194{,}740{,}020$ & $197{,}144{,}582$ & rs2688513 & MUC4 & G & A & $-0.0179$ \\
-        4 & $190{,}295{,}130$ & $190{,}787{,}660$ & rs11132751 A\textgreater G & -- & $-0.0254$ \\
-        5 & $58{,}436{,}920$ & $58{,}704{,}393$ & rs66803649 T\textgreater G & PDE4D & $-0.0139$ \\
-        5 & $130{,}881{,}184$ & $131{,}784{,}005$ & rs273901 G\textgreater T & MIR3936HG & $0.0142$ \\
-        6 & $29{,}829{,}265$ & $29{,}879{,}529$ & rs3132714 T\textgreater C & (MHC/HCP5B) & $0.0177$ \\
-        11 & $9{,}825{,}447$ & $9{,}881{,}475$ &  rs2403222 C\textgreater T & SBF2 & 0.0140\\
-        11 & $10{,}537{,}974$ & $10{,}558{,}777$ & rs10458931 G\textgreater A & RNF141 & 0.0117 \\
-        11 & $28{,}602{,}221$ & $28{,}691{,}287$ & rs7942414 T\textgreater C & -- & -0.0120 \\
-        11 & $61{,}547{,}237$ & $61{,}627{,}960$ & rs174550 T\textgreater C & FADS1/FADS2 & -0.0140\\
-        11 & $71{,}117{,}319$ & $71{,}221{,}585$ & rs12800438 G\textgreater A & NADSYN1 & 0.0243 \\
-        15 & $28{,}291{,}812$ & $28{,}539{,}834$ & rs12913832 A\textgreater G & HERC2 & $0.0285$ \\
+        1  & $98.30$–$98.42$   & $1$   & rs12062845 C\textgreater A & DPYD          & $-0.0163$ & Waist circumference   & $0.98$ \\
+        2  & $135.15$–$137.09$ & $177$ & rs4988235 G\textgreater A  & LCT/MCM6      & $+0.0313$ & Milk consumption      & $0.99$ \\
+        2  & $198.14$–$198.97$ & $12$  & rs1455653 A\textgreater G  & RFTN2         & $-0.0157$ & Ankle spacing width   & $0.97$ \\
+        5  & $0.42$–$0.46$     & $1$   & rs2251843 G\textgreater A  & EXOC3         & $+0.0109$ & Haematocrit           & $0.99$ \\
+        5  & $33.88$–$34.00$   & $14$  & rs16891982 C\textgreater G & SLC45A2       & $+0.0299$ & Skin colour           & $0.99$ \\
+        5  & $131.53$–$131.72$ & $11$  & rs273901 T\textgreater G$^\ddagger$ & SLC22A4/5 & $-0.0149$ & \textit{SLC22A4/5} expression & $0.99$ \\
+        5  & $147.68$–$147.76$ & $1$   & rs1363707 A\textgreater G  & SPINK7/9      & $-0.0141$ & Pulse pressure        & $0.98$ \\
+        6  & $29.82$–$29.89$   & $6$   & rs3132714 T\textgreater C$^\dagger$  & HLA-F/HLA-G   & $+0.0181$ & \textit{HLA-F} expression & $0.90$ \\
+        11 & $61.55$–$61.62$   & $2$   & rs174547 C\textgreater T   & FADS1/FADS2   & $+0.0139$ & Cholesterol           & $0.99$ \\
+        11 & $71.12$–$71.22$   & $14$  & rs12800438 A\textgreater G & NADSYN1/DHCR7 & $-0.0243$ & Vitamin D             & $0.99$ \\
+        12 & $111.24$–$111.69$ & $2$   & rs1034603 A\textgreater G  & CUX2          & $-0.0151$ & Platelet crit         & $0.99$ \\
+        12 & $113.32$–$113.38$ & $5$   & rs4767028 A\textgreater G  & OAS1          & $-0.0148$ & OAS1 protein levels   & $0.99$ \\
+        14 & $63.78$–$63.88$   & $4$   & rs28409133 T\textgreater G & (PPP2R5E)     & $-0.0301$ & Standing height       & $0.92$ \\
+        15 & $28.31$–$28.54$   & $12$  & rs12913832 A\textgreater G & HERC2         & $+0.0227$ & Skin colour           & $0.94$ \\
         \bottomrule
-    \end{tabular}
+    \end{tabular}%
+    }
+    \\[2pt]
+    \footnotesize $^{\dagger}$No ancestral allele call at rs3132714; sign of selection is relative to the alternate allele.
+\end{table}
+
+\begin{table}[htbp]
+    \centering
+    \caption{Regions meeting the detection threshold for which no functional
+    association could be established. Selection coefficients refer to the derived
+    allele, polarised against the Ensembl GRCh37 ancestral reconstruction.
+    ``GWAS'' reports the colocalisation posterior and number of studies tested
+    where associations existed, and ``none'' where no genome-wide significant
+    association was found in any OpenGWAS batch. ``Hapl.'' is the fraction of
+    neighbouring loci with correlated frequency trajectories that are also in
+    linkage disequilibrium ($r^2>0.2$), a measure of whether the signal is
+    carried by a shared haplotype.}
+    \label{tab:no_functional_support}
+    \resizebox{\columnwidth}{!}{%
+    \begin{tabular}{c r r l l r r r l r}
+        \toprule
+        \textbf{Chr} & \textbf{Region (Mb)} & \textbf{Loci} & \textbf{Target variant} &
+        \textbf{Gene} & \textbf{$\hat{s}$} & \textbf{anc.} & \textbf{mod.} &
+        \textbf{GWAS} & \textbf{Hapl.} \\
+        \midrule
+        2  & $37.94$–$38.01$   & $1$ & rs72791933 G\textgreater A  & (CDC42EP3)      & $-0.0099$ & $0.32$ & $0.00$ & none          & $0.00^{\ddagger}$ \\
+        2  & $213.76$–$213.82$ & $1$ & rs10498001 C\textgreater T  & --              & $+0.0141$ & $0.12$ & $0.21$ & $0.00$ (8)    & $0.00$ \\
+        2  & $221.74$–$221.79$ & $1$ & rs830747 A\textgreater G    & --              & $-0.0126$ & $0.22$ & $0.76$ & none          & $0.17$ \\
+        3  & $30.71$–$30.73$   & $1$ & rs3773656 G\textgreater A   & TGFBR2          & $+0.0143$ & $0.75$ & $0.04^{*}$ & none      & $0.00$ \\
+        3  & $56.62$–$56.67$   & $1$ & rs282534 G\textgreater A    & CCDC66          & $+0.0195$ & $0.42$ & $0.91$ & $0.00$ (1)    & n/a \\
+        4  & $190.64$–$190.69$ & $1$ & rs11132751 A\textgreater G  & --              & $-0.0254$ & $0.74$ & $0.03^{*}$ & none      & $0.00$ \\
+        5  & $58.52$–$58.56$   & $1$ & rs66803649 G\textgreater T  & PDE4D           & $+0.0139$ & $0.66$ & $0.01^{*}$ & none      & $0.00$ \\
+        9  & $31.07$–$31.12$   & $1$ & rs10813459 C\textgreater T  & --              & $+0.0157$ & $0.64$ & $0.88$ & none          & $\mathbf{0.71}$ \\
+        9  & $119.56$–$119.63$ & $3$ & rs200274580 T\textgreater C & ASTN2           & $-0.0142$ & $0.60$ & $0.82$ & none          & $\mathbf{0.33}$ \\
+        10 & $55.10$–$55.15$   & $1$ & rs10825008 G\textgreater A  & --              & $+0.0171$ & $0.46$ & $0.71$ & none          & $0.10$ \\
+        11 & $7.96$–$7.98$     & $1$ & rs907203 A\textgreater G    & (OR10A3, NLRP10)& $+0.0159$ & $0.05$ & $0.51$ & none          & $0.00^{\ddagger}$ \\
+        11 & $9.84$–$9.88$     & $2$ & rs2403221 G\textgreater A   & SBF2            & $+0.0201$ & $0.44$ & $0.79$ & $0.29$ (13)   & $0.11$ \\
+        11 & $34.94$–$34.95$   & $1$ & rs2956103 T\textgreater G   & PDHX            & $-0.0105$ & $0.71$ & $0.21$ & none          & $0.17$ \\
+        11 & $105.93$–$105.95$ & $1$ & rs10895900 C\textgreater T  & KBTBD3          & $+0.0234$ & $0.20$ & $0.75$ & none          & n/a \\
+        12 & $78.30$–$78.35$   & $1$ & rs17817928 T\textgreater G  & NAV3            & $-0.0116$ & $0.29$ & $0.10^{*}$ & none      & $0.00^{\ddagger}$ \\
+        12 & $93.06$–$93.10$   & $1$ & rs937754 T\textgreater C    & --              & $-0.0131$ & $0.70$ & $0.92$ & none          & $\mathbf{0.75}$ \\
+        14 & $99.75$–$99.76$   & $1$ & rs5013941 G\textgreater T   & (BCL11B)        & $+0.0159$ & $0.73$ & $0.08^{*}$ & none      & $0.00$ \\
+        16 & $81.62$           & $1$ & rs4503787 C\textgreater A   & CMIP            & $+0.0336$ & $0.06$ & $0.58$ & $0.50$ (26)   & $0.00$ \\
+        \bottomrule
+    \end{tabular}%
+    }
+    \\[3pt]
+    \footnotesize
+    $^{*}$Modern frequency below $0.10$; association testing in the present-day
+    panel had little power at these sites, so absence of a GWAS hit is
+    uninformative. \\
+    $^{\ddagger}$Seven or more neighbouring loci with correlated trajectories,
+    none in linkage disequilibrium — a pattern consistent with a localised
+    technical artefact rather than a sweep.
 \end{table}
 
 \section{Discussion}
+
+\SweepLink is the first tool for the joint estimate of demography and linked selection from genome-wide time-series data.
+Correlations between nearby loci, that \SweepLink captures, allows it to pull evidence of selection to improve detection power for weak selection compared to other existing single-locus methods.
+At the same time isolated loci that happen to mimic selection sweep due to genetic drift are pushed to neutrality as they are not supported by their background.
+
+Our experiments demonstrated that \SweepLink is more sensitive to weak and moderate selection than other tools, while its detection power for strong selection is the same.
+When sweeplink is able to capture the correlation between loci then it produce highly polarized posteriors, that lead to best performance on the high stringency.
+Compared to other existing methods this provides an advantage on practice: while other tool require an empirical threshold to separate neutral loci from selected and highly depend on this choice, \SweepLink provides best estimates on its highest stringency level.
+This eliminates the dependency on the threshold.
+When \SweepLink fails to estimate the correlation structure along the genome, then it converges to the behaviour of single-loci tools.
+
+Our experiments on simulated data 
 
 % our best filtering kind of make sense because our model does not account for allele to be lost
 
