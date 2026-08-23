@@ -4,6 +4,7 @@
 \usepackage{blkarray}% http://ctan.org/pkg/blkarray
 \usepackage{amssymb}
 \usepackage{amsmath}
+\usepackage{array}
 \newcommand{\matindex}[1]{{\scriptstyle#1}}% Matrix index
 
 \def\G{{\cal G}}
@@ -380,6 +381,7 @@ Detailed documentation and a tutorial can be found at \url{https://sweeplink.rea
 
 \subsection{Benchmarking Against Competitor Single-Locus Tools}
 
+\paragraph{Simulated Benchmark Dataset.}
 To perform a benchmark analysis of \SweepLink, we generate a simulated dataset using the forward-in-time simulator SLiM v4~\citep{haller2023}.
 We generate ten short chromosomes, each with a length of 0.1~Mb.
 Half of chromosomes contain only neutral mutations.
@@ -390,26 +392,27 @@ Sampling is performed once the selected allele reaches a frequency of 30\%.
 Genetic data are sampled at $K=11$ consecutive time points, with $\Delta t=16$ generations between each, thereby spanning 160 generations.
 This sampling regime reflects the real human data analyzed in this study, which includes samples dating approximately 4,000 years before present.
 At each time point, genetic data for $n=25$ diploid individuals were sampled.
-To generate the robust benchmark dataset, this entire simulation setup was replicated 100 independent times, yielding a total dataset of exactly 500 independent selective sweeps (100 for each selection coefficient) against a background of over 100,000 strictly neutral variants unlinked to the targets of selection. We filtered the dataset to retain only sites where the allele is segregating at a minimum of two sampled time points; as shown in the Supplementary Material, this filter does not affect inference accuracy but substantially reduces runtime.
+To generate the robust benchmark dataset, this entire simulation setup was replicated 100 independent times, yielding a total dataset of exactly 500 independent selective sweeps (100 for each selection coefficient) against a background of over 100,000 strictly neutral variants unlinked to the targets of selection.
 We filtered the dataset to retain only sites where the derived allele segregates at a minimum of two sampled time points, removing on average ~21\% of variants.
-As shown in the Supplementary Material, this filter does not affect inference accuracy but substantially reduces runtime.
+As shown in the Supplementary Material, this filter does not affect inference accuracy but reduces runtime.
 
-We evaluate the performance of \SweepLink against three established single-locus tools:\linebreak\ApproxWF~\citep{ferrer2016}, \diplolocus~\citep{cheng2025}, and \bmws~\citep{mathieson2022}.
+\paragraph{Detection Power Evaluation.}
+We evaluate the performance of \SweepLink against three established single-locus tools: \ApproxWF~\citep{ferrer2016}, \diplolocus~\citep{cheng2025}, and \bmws~\citep{mathieson2022}.
 To ensure a fair comparison, the true simulated effective population size ($ N=10{,}000 $) is explicitly provided as a fixed, known value to all methods.
-\SweepLink is launched with 50 grid points for the numerical scheme of the diffusion equation and a discrete selection grid of 13 states for positive selection magnitudes from $0.0$ to $0.06$ with a step size of $0.005$.
+\SweepLink is launched with 50 grid points for the numerical scheme of the diffusion equation and a discrete selection grid of 13 states for positive selection magnitudes from $s=0.0$ to $0.06$ with a step size of $0.005$.
 This grid is extended in \SweepLink to include corresponding negative selection values following Equation~\ref{eq:sel_grid}.
 The same complete grid is used for the maximum-likelihood approach in \diplolocus, which calculates the likelihood values across the grid and then interpolates them to find the off-grid maximum.
 We run \ApproxWF and \bmws with default parameters as recommended in their documentation.
 If not specified otherwise, MCMC in \ApproxWF and \SweepLink is run for 100,000 samples.
 
 First, we evaluate and compare the power of each tool to detect selection.
-We frame the problem as a binary classification task: distinguishing neutral loci from those under directional selection, regardless of the estimated selection coefficient.
-Because random genetic drift generates background noise, raw quantitative estimates of selection cannot be taken as definitive proof of an actual sweep.
+We frame the problem as a binary classification task: how well each tool distinguish neutral loci from those under directional selection, regardless of the estimated selection coefficient.
+Because random genetic drift generates background noise and can mimic trajectories similar to the selection process, raw quantitative estimates of selection cannot be taken as definitive proof of an actual sweep.
 Instead, the raw outputs of the selection from tools must be further processed to produce scores that quantify the evidence for selection.
 Once these scores are obtained, a formal discovery threshold is applied to binarily classify each locus as either strictly neutral or under directional selection.
 
-We extract specific metrics from each tool as scores for the classification task.
-For \diplolocus, we directly utilize the $p$-value derived from its likelihood ratio test. 
+We extract specific metrics from each tool as scores for this classification task.
+For \diplolocus, we directly utilize the $p$-value derived from its likelihood ratio test~\citep{cheng2025}. 
 For \bmws, we follow the statistical framework described in its original publication~\citet{mathieson2022}.
 We aggregate single-locus selection estimations within sliding windows of 20 SNPs, approximate a gamma distribution, and derive a $p$-value by testing whether the window estimation deviates from this distribution.
 Finally, both \SweepLink and \ApproxWF utilize MCMC-based Bayesian inference to yield posterior distributions for the selection coefficient. 
@@ -422,23 +425,35 @@ For example, a researcher might classify a locus as selected only if it achieves
 An optimal threshold must maximize true positives (the correct identification of actual selective sweeps) while minimizing both false positives (the incorrect flagging of neutral loci) and false negatives (missed sweeps).
 To identify the optimal threshold and best performance for each tool, we evaluate the global classification accuracy across a continuous spectrum of all possible discovery thresholds. 
 
-As a representative metric for detection accuracy, we calculate the Matthews correlation coefficient (MCC)~\citep{matthews1975} for each threshold.
+As a representative metric for detection accuracy, we calculate the Matthews correlation coefficient~(MCC)~\citep{matthews1975} for each threshold.
 The MCC is defined as:
 $$
 \text{MCC} = \frac{TP \times TN - FP \times FN}{\sqrt{(TP + FP)(TP + FN)(TN + FP)(TN + FN)}}
 $$
-where $TP$ (True Positives) represents the number of correctly identified loci under selection, $TN$ (True Negatives) represents the number of correctly identified neutral loci, $FP$ (False Positives) is the number of neutral loci wrongly classified as selected, and $ FN $ (False Negatives) is the number of selected loci erroneously classified as neutral.
+where $TP$ (True Positives) represents the number of correctly identified loci under selection, $TN$ (True Negatives) represents the number of correctly identified neutral loci, $FP$ (False Positives) is the number of neutral loci wrongly classified as selected, and $ FN $ (False Negatives) is the number of selected loci wrongly classified as neutral.
 The MCC yields a value between $-1$ and $1$, where $1$ indicates perfect classification, $0$ indicates performance no better than random guessing, and $-1$ indicates total disagreement between predictions and the true labels. 
-We specifically chose the MCC as an improvement over the classic $F_1$ score, which can be highly misleading when applied to datasets with imbalanced classes~\citep{chicco2020}, such as our simulated dataset containing roughly 100,000 neutral variants but only 500 selective sweeps.
+We specifically chose the MCC as an improvement over the classic $F_1$ score, which can be highly misleading when applied to datasets with imbalanced classes~\citep{chicco2020}, such as our simulated dataset containing roughly 80,000 neutral variants but only 500 selective sweeps.
 Therefore, by evaluating MCC accross a spectrum of possible thresholds, we discover the optimal threshold as the threshold yielding best MCC score.
 We compare tools by their best MCC scores and investigae how threshold selection impacts their power to detect selection.
 
-Furthermore, we explicitly compare the accuracy of each tool to estimate the specific selection coefficients ($ s = 0.01 $ to $ 0.05 $).
-We choose thresholds to align all methods to an identical False Positive Rate (FPR) of 0.05\%. 
-This standardized FPR corresponds to the baseline error rate achieved by \SweepLink at its optimal threshold.
-We compare how disperse are estimates for true neutral variants that are classified as selection sweeps (false positives).
-Finally, we compare the mean and the variance of the estimated selection coefficients ($\hat{s}$) for selection sweeps.
-To avoid bias towards zero, we do not include estimations for variants that are misclassified, i.e. if true selection sweep is identified as neutral, the estimated selection coefficient is not considered.
+\paragraph{Correlated False-Positives and Window-based Comparison.}
+When calculating MCC scores for given dataset, \SweepLink provides the best detection power among tools (Table~\ref{tab:no_window}), but the number of false positives is also the highest (e.g. 0.05\% vs 0.01\% for \ApproxWF).
+Because \SweepLink pools evidence across linked loci, drift that happens to mimic selection at several linked sites can trigger correlated false positives across an entire linked block, inflating its false-positive rate under locus-level MCC scoring.
+To avoid this bias, we evaluate detection performance over $k=21$ alternating, non-adjacent windows per chromosome ($\sim$9{,}500\,bp apart) rather than individual loci.
+A window is called positive if any locus within it is significant given current threshold.
+The middle window of a selected chromosome --- the one containing the true sweep --- is scored as a true positive (TP) if positive and a false negative (FN) otherwise.
+Every other window, on any neutral chromosome, is scored as a false positive (FP) if positive and a true negative (TN) otherwise.
+This window-based comparison collapses correlated false positives from a linked block into a single call, ensuring a fair comparison between tools.
+
+\paragraph{Selection Coefficient Accuracy.}
+We further compare the detection sensitivity and estimation accuracy of each tool across strictly neutral sites ($s=0.0$) and five distinct categories of positive selection ($s \in \{0.01, 0.02, 0.03, 0.04, 0.05\}$).
+Thresholds are chosen so that all methods are aligned to an identical window-based False Positive Rate (FPR) of 0.3\%, corresponding to the baseline error rate achieved by \SweepLink at its optimal threshold.
+For each selection coefficient, we report the detection rate as the rate at which each tool correctly predicts the selection at the corresponding loci regardless of the estimated value. 
+To compare accuracy for correctly detected selection sweeps, we compare the mean and variance of the estimated selection coefficients ($\hat{s}$) at the true sweep locus.
+To avoid biasing this comparison toward zero, we exclude sweeps misclassified as neutral (false negatives) from this analysis.
+Additionally, we compare the dispersion of $\hat{s}$ for neutral variants
+misclassified as sweeps (false positives), taken from the locus that triggered the
+window's significance.
 
 \subsection{\SweepLink Robustness and Parameter Sensitivity}
 
@@ -458,11 +473,22 @@ Both metrics are evaluated for each selection coefficient ($0.01$, $0.02$, $0.05
 We also additionally check the stability of detection power of \SweepLink using MCC metrics evaluated on the spectrum of thresholds as described in the previous section.
 
 \subsection{Empirical Data}
-We analysed the British ancient-DNA time series dataset that was constructed and analysed previously using \bmws in~\citet{mathieson2022} from several resources~\citep[version 44.3]{mallick2024}\citep{martiniano2016,schiffels2016,olalde2018,brace2019,margaryan2020,patterson2022,1000G2015}.
+We apply \SweepLink on the British ancient-DNA time series dataset that was analysed previously using \bmws in~\citet{mathieson2022} and constructed from several resources~\citep[version 44.3]{mallick2024}\citep{martiniano2016,schiffels2016,olalde2018,brace2019,margaryan2020,patterson2022,1000G2015}.
 Dataset contains 627 pseudo-haploid samples genotyped on 1240k SNPs: 535 ancient samples and 92 present-day samples.
 
 Sample dates are converted to generations assuming 29 years per generation and binned into 5-generation intervals, giving 26 timepoints spanning $0{-}150$ generations before present ($0{-}4{,}350$ years).
-Sampling density is uneven across this range: the oldest sample dates to $4{,}480$ BP and the youngest ancient sample to 930 BP, nearly half of all ancient chromosomes fall within ${\sim2{,}000–2{,}300}$ years BP.
+Sampling density is uneven across this range (Figure~\ref{fig:british_data_sampling}): the oldest sample dates to $4{,}480$ BP and the youngest ancient sample to 930 BP, nearly half of all ancient chromosomes fall within ${\sim2{,}000-2{,}300}$ years BP.
+
+\begin{figure}[btp]
+    \label{fig:british_data_sampling}
+    \centering
+    \includegraphics[width=\textwidth]{figures/fig_sampling.pdf}
+    \caption{Temporal sampling of the British ancient-DNA dataset, before and after binning.
+    \textbf{A}~The dataset assembled from~\citet{mathieson2022} contains 627 pseudo-haploid individuals at 90 distinct timepoints. 
+    \textbf{B}~After binning by 5 generations of 29 years, 26 timepoints of 145 years remain.
+    Shaded bands mark the bins and bars are labelled with the number of individuals they contain.
+    }
+\end{figure}
 
 Starting from $1{,}150{,}639$ autosomal SNPs, we remove 151 sites with no called genotypes and $144{,}019$ sites monomorphic across the dataset.
 Then we apply filters for missing genotypes to remove number of sites with low-quality data.
@@ -473,39 +499,43 @@ We do not use MAF filtering as in the original study~\citep{mathieson2022} to av
 This leaves $816{,}914$ SNPs genome-wide (71\% of the starting set).
 
 We split the dataset by chromosome and used \SweepLink to infer a selection coefficient at every locus together with an effective population size for each chromosome.
-A locus was called as under selection when all 100,000 MCMC iterations placed $s$ on the same side of zero; at this chain length the criterion corresponds to a posterior probability of at least 0.99999, and in our simulations this maximum-stringency threshold gave \SweepLink its best detection performance (Section~\ref{sec:threshold}).
+A locus is called as potentially causal for selection when all 100,000 MCMC iterations agree on the sign of selection coefficient.
+At this chain length the criterion corresponds to a posterior probability of at least 0.99999, and in our simulations this maximum-stringency threshold gave \SweepLink its best detection performance (Section~\ref{sec:threshold}).
 At such loci we report the posterior mean of $s$ over the signed grid.
 
-Because \SweepLink models linkage between neighbouring loci through a hidden Markov chain along the genome, evidence for selection is shared within a region and a selected locus rarely stands alone.
-We therefore report regions rather than individual loci.
-We define a peak as a maximal run of consecutive SNPs at which the posterior probability of neutrality falls below 0.5, and regard a peak as affected by selection when it contains at least one locus meeting the criterion above.
+Because \SweepLink models linkage between neighbouring loci through a hidden Markov chain along the genome, evidence for selection is shared within a region and a detected locus rarely stands alone.
+We therefore report regions together with an individual loci.
+We define a region as a maximal run of consecutive SNPs at which the posterior probability of neutrality is below 0.5, and regard a region as affected by selection when it contains at least one locus that was detected as potentially causal variant for selection using criterion above.
 
-Loci meeting the detection criterion are carried through a common annotation pipeline.
-Selected variants are queried against the OpenGWAS database \citep{elsworth2020} by genomic position, retaining associations reaching genome-wide significance ($p < 5\times10^{-8}$).
-We restricted the query to the two UK Biobank~\citep{bycroft2018} analyses available in OpenGWAS: the MRC-IEU GWAS pipeline (\texttt{ukb-b})~\citep{elsworth2019ukb} and the Neale laboratory round~2 analysis (\texttt{ukb-d})~\citep{nealelab2018ukb}.
-Where associations are found we test whether the selection signal and the GWAS signal are consistent with a shared causal variant by approximate Bayes factor colocalisation, reporting the posterior probability of a common causal variant (PP4)~\citep{giambartolomei2014}.
+Loci identified as potentially causal variants for selection are carried through a common annotation pipeline.
+Associations were retrieved from OpenGWAS~\citep{elsworth2020opengwas}, which aggregates the NHGRI-EBI GWAS Catalog~\citep{buniello2019}, UK Biobank~\citep{bycroft2018} analyses from the MRC-IEU~\citep{elsworth2019ukb} and Neale laboratory pipelines~\citep{nealelab2018ukb}, and molecular-trait scans including eQTLGen whole-blood \emph{cis}-eQTLs~\citep{vosa2021}.
+We queried every batch except FinnGen and BioBank Japan, whose populations differ too much from the British sample in linkage structure.
+Where associations are found we test whether the selection signal and the GWAS signal are consistent with a shared causal variant by approximate Bayes factor colocalisation, reporting the posterior probability of a common causal variant (PP$_4$)~\citep{giambartolomei2014}.
+We apply colocalisation analysis using a 1~Mb window centred on the target variant ($\pm$500~kb) and the prior probabilities $p_1 = p_2 = 10^{-4}$ and $p_{12} = 10^{-5}$.
 
 Detected variants are additionally annotated with the Ensembl Variant Effect Predictor \citep{mclaren2016} to establish their functional consequence and their overlap with annotated regulatory features.
 For each region identified to be affected by selection we plot the inferred selection signal alongside the 1000 Genomes Phase~3 recombination map~\citep{1000G2015,howie2009}, to establish whether peaks coincided with regions of reduced recombination.
-For the lactase region on chromosome 2 we additionally delimit the surrounding linkage disequilibrium block using the European block boundaries identified by LDetect~\citet{berisa2015}.
+For the lactase LCT region on chromosome 2 we additionally show the surrounding linkage disequilibrium block using the European block boundaries identified by LDetect~\citet{berisa2015}.
 
 \section{Results}
 
 \subsection{Strong posterior support eliminates the need for threshold tuning}
 \label{sec:threshold}
 
-The result MCC values across discovery thresholds for each tool are presented in Figure~\ref{fig:results:mcc_plot}.
-Two runs of \SweepLink are presented on the plot: the default run of 100,000 MCMC samples (blue) and extended MCMC run of 1,000,000 samples (light blue).
-Consistent with recognized limitations in the field, the detection performance of existing tools is highly sensitive to the chosen discovery threshold.
-Both \ApproxWF and \bmws exhibit sharp, fragile performance peaks at relatively lenient thresholds.
-For instance, \ApproxWF reached its maximum performance (MCC = 0.85) at a posterior probability of 0.90, but its detection power collapsed relatively steeply under stricter criteria.
-Similarly, \bmws peaked at MCC of 0.71 ($p = 2.8 \times 10^{-3}$) before experiencing a steady decline.
+The result window-based MCC values across the discovery thresholds for each tool are presented in Figure~\ref{fig:results:mcc_plot}.
+\SweepLink shows the highest peak performance (MCC = 0.87), ahead of \diplolocus (0.8), \ApproxWF (0.85) and \bmws (0.77).
+Each tool reaches its optimum at a threshold specific to its own score scale, but they differ in the shape of their threshold dependence and in how wide a range of thresholds sustains near-optimal performance.
+The latter is important, because the optimal threshold is unknown in real empirical applications, and researchers are forced to rely on standard conservative heuristics, such as a Bonferroni-corrected significance level~\citep{cheng2025}. 
+The narrower the optimal plateau, the more that choice costs.
+The region retaining performance within 0.01 MCC of the peak spans 1.6 orders of magnitude for \SweepLink and 1.2 for \diplolocus, but only 0.7 for \ApproxWF and 0.2 for \bmws, after which performance declines steadily.
+At the high stringencies typically required for genome-wide scans
+($\sim 10^{-7}$), \diplolocus falls from its optimum of 0.86 to 0.78, and \bmws from 0.77 to 0.07.
+\ApproxWF reports a posterior probability rather than a $p$-value, so it is not subject to the same correction, but it is no less threshold-dependent: its optimum lies at a very lenient $1-P \approx 0.3$, and demanding higher confidence costs it 0.09 MCC by $1-P = 10^{-4}$.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.55\textwidth]{figures/MCC/comparison_power_plot.pdf}
+\includegraphics[width=0.6\textwidth]{figures/MCC/comparison_power_plot_no_1M.pdf}
 \caption{\textbf{Power to detect selective sweeps across discovery thresholds.}
-\SweepLink (blue) is run for 100,000 MCMC samples with an extended version \SweepLink \texttt{(1M)} (light blue) run for 1 million samples.
 The x-axis displays native $p$-values (\diplolocus, \bmws) or $1-P$ (\SweepLink, \ApproxWF), where $P = \max(P(s>0), P(s<0))$.
 Markers denote peak MCC.
 Unlike standard methods, \SweepLink receives peak accuracy on maximum possible threshold ($P=1.0 - 10^{-5}$) in its default run.
@@ -514,15 +544,13 @@ The extended run of \SweepLink \texttt{(1M)} for 1 million samples demonstrate t
 \label{fig:results:mcc_plot}
 \end{figure}
 
-The maximum-likelihood approach of \diplolocus achieved the highest nominal peak performance among competitor tools (MCC = 0.86), but this occurred at a highly specific intermediate threshold ($p = 10^{-4}$).
-Because this optimal threshold is unknown in real empirical applications, researchers are forced to rely on standard conservative heuristics, such as a Bonferroni-corrected significance level~\citep{cheng2025}.
-However, imposing these stricter thresholds causes a steady degradation in detection power.
-Consequently, at the high stringencies typically required for genome-wide scans ($\sim10^{-7}$), the classification accuracy of \diplolocus quickly drops below the stable performance maintained by \SweepLink.
+\SweepLink also reports a posterior probability as \ApproxWF, but its optimum lies at the opposite end of the scale.
+It achieves the widest plateau of any tool tested and remains stable throughout the entire high-confidence domain ($1-P < 10^{-4}$): 0.87 at $10^{-4}$ and 0.88 at $10^{-5}$.
+Crucially, \SweepLink reaches its optimal performance at the theoretical limit of maximum confidence ($1-P \sim 10^{-5}$), which is set by the length of the MCMC chain: a posterior probability estimated from $W$ samples cannot be resolved beyond $1/(1+W)$.
+Demanding the highest confidence the method can express is therefore also the best-performing choice, so no threshold tuning is required and the problem of an unknown optimum does not arise.
+The measured plateau width is consequently a lower bound rather than a property of the estimator: running an extended chain of 1,000,000 samples reproduces the same plateau and extends it by a further order of magnitude (Supplementary Figure~\ref{fig:supp:mcc_1M}), confirming that the limit reflects the resolution of the estimator rather than its discriminative power.
 
-\SweepLink achieved the best MCC score ($0.89$) among tested tools for the extended MCMC chain of 1 million samples and a score of $0.85$ for default chain of 100,000 samples.
-More importantly, our results show the stable performance across the entire high-confidence domain ($1-P < 10^{-4}$).
-For the default run, \SweepLink reached its optimal performance at the theoretical limit of maximum confidence level ($1-P = 10^{-5}$).
-As detailed in subsequent experiments, this robust plateau with peak at maximum threshold is consistently maintained across diverse evolutionary scenarios, bounded only by the fundamental limits of genetic linkage (Figure~\ref*{fig:supp:power_analysis}).
+As detailed in subsequent experiments, this robust plateau of \SweepLink with peak at maximum threshold is consistently maintained across diverse evolutionary scenarios, bounded only by the fundamental limits of genetic linkage (Figure~\ref*{fig:supp:power_analysis}).
 Specifically, under extreme recombination rates ($r \ge 10^{-6}$ relative to a mutation rate of $10^{-8}$), the physical footprint of a sweep becomes too narrow to provide a meaningful regional context.
 In these isolated cases, the performance of \SweepLink converges toward single-locus behaviour, exchanging its high-confidence plateau for a distinct performance peak at more lenient thresholds (Figure~\ref*{fig:supp:power_analysis:rec_rate}).
 % TODO: below to discussion?
@@ -532,33 +560,32 @@ Researchers can simply demand maximum statistical certainty to achieve optimal d
 
 \subsection{Sweep Detection Sensitivity and Estimation Accuracy}
 
-To explicitly evaluate and compare detection sensitivity specifically for each selection coefficient, we aligned all tools to an identical, highly conservative empirical False Positive Rate (FPR = 0.05\%).
-This specific threshold corresponds to the baseline error rate achieved by \SweepLink at the threshold of absolute certainty ($1 - P=10^{-5}$).
-We evaluated the detection rate---the percentage of loci identified as being selected by each tool---across strictly neutral sites ($s=0.0$) and five distinct categories of positive selection ($s \in \{0.01, 0.02, 0.03, 0.04, 0.05\}$).
-Results are presented in Figure~\ref{fig:results:tools_comparison}A.
+Result detection rates for five distinct categories of positive selection ($s \in \{0.01, 0.02, 0.03, 0.04, 0.05\}$) are presented in Figure~\ref{fig:results:tools_comparison}A.
 While all methods successfully identified strong selective sweeps ($s \ge 0.03$), \SweepLink demonstrated vastly superior sensitivity for weak selection.
-For instance, \SweepLink successfully recovered 10\% of the weakest sweeps ($s = 0.01$), whereas single-locus methods (\diplolocus, \ApproxWF) detected only a negligible fraction, and \bmws failed to detect any sweeps of this magnitude entirely.
+For instance, \SweepLink successfully recovered 17\% of the weakest sweeps ($s = 0.01$), whereas single-locus methods (\diplolocus, \ApproxWF) detected only a fraction ($9\%$ and $3\%$ respectively), and \bmws failed to detect any sweeps of this magnitude entirely.
 
 \begin{figure}[tb]
 \centering
 \includegraphics[width=0.8\textwidth]{figures/master_plots/comparison_master_plot_no1M_with_round2.pdf}
 \caption{\textbf{Performance and estimation accuracy for selection detection tools.}
-\textbf{(A)}~Sweep detection rates across delection coefficients evaluated at a matched False Positive Rate (FPR) of 0.03\% (the empirical FPR of \SweepLink at $P=1.00$).
+\textbf{(A)}~Sweep detection rates across selection coefficients evaluated at a matched window-based False Positive Rate (FPR) of 0.3\% (the empirical FPR of \SweepLink at $1-P \sim 10^{-5}$).
 \SweepLink uniquely retains sensitivity for weak selection ($s=0.01$).
-\textbf{(B)}~Estimated selection coefficients ($\hat{s}$) for loci passing the 0.03\% FPR threshold.
+\textbf{(B)}~Estimated selection coefficients ($\hat{s}$) for loci passing the 0.3\% FPR threshold.
 Coloured dashed lines indicate true values.
-Standard tools severely overestimate selection magnitude for false positives ($s=0.0$, yellow) and weak sweeps ($s=0.01$, light green).
-In contrast, \SweepLink tightly constrains neutral errors near zero and provides highly accurate estimates for weak selection ($s=0.01$).
+Most existing tools overestimate selection magnitude for false positives ($s=0.0$, yellow) and weak sweeps ($s=0.01$, light green).
+In contrast, \SweepLink tightly constrains neutral errors near zero and provides highly accurate estimates for all selection coefficients, including weak selection ($s=0.01$).
 }
 \label{fig:results:tools_comparison}
 \end{figure}
 
 We then compared the accuracy of the estimated selection coefficients ($\hat{s}$) across tools (Figure~\ref{fig:results:tools_comparison}B).
-To avoid biasing our distributions towards neutrality, we restricted this comparison strictly to loci predicted to be under selection, using the same thresholds defined previously (FPR=0.03\%).
-Our results show that existing methods exhibit extreme variance when generating false positive calls---incorrectly predicting selection coefficients of high magnitude for strictly neutral sites ($s=0.0$).
+To avoid biasing our distributions towards neutrality, we restricted this comparison strictly to loci predicted to be under selection, using the same thresholds defined previously (FPR=0.3\%).
+Our results show that \diplolocus and \ApproxWF exhibit extreme variance when generating false positive calls---incorrectly predicting selection coefficients of high magnitude for strictly neutral sites ($s=0.0$).
 This result is visualized by the yellow boxplots in Figure~\ref{fig:results:mcc_plot}B.
 This behavior is expected, as these tools analyze each locus independently and only detect selection when random genetic drift happens to mimic a strong selective sweep.
-By leveraging regional genomic context, \SweepLink overcomes this limitation, yielding much more narrow confidence interval of estimations that is tightly constrained near zero.
+While \ApproxWF shows more positive estimations for false positive calls, \diplolocus produce more high negative estimations.
+We note that such estimations can be easily mixed with a true sweeps even for \diplolocus as sometimes polarization error may happen and then the sign of predicted selection will swap making it indistinguishable from the true sweep at $s=0.05$.
+By leveraging regional genomic context, \SweepLink overcomes this limitation, yielding much more narrow confidence interval of estimations for trully neutral variants that is tightly constrained near zero.
 
 When comparing estimates for selected variants, competitive methods routinely overestimate weak selective sweeps ($s=0.01$).
 Similar to the high-magnitude estimates for neutral loci, this bias occurs because weak sweeps become significant only when random genetic drift happens to magnify the signal, producing a trajectory that mimics a much stronger sweep (e.g., $s \approx 0.02$).
@@ -674,8 +701,10 @@ Overall, our scan identified X novel candidate regions under selection that were
     Selection coefficients ($\hat{s}$) refer to the derived allele, polarised against
     the Ensembl GRCh37 ancestral reconstruction; variants are written as
     ancestral\textgreater derived. ``Loci'' is the number of variants in the region
-    at which all $10^5$ MCMC iterations agreed on the sign of $s$. PP$_4$ is the
-    posterior probability that the selection and trait signals share a causal variant.}
+    at which all $10^5$ MCMC iterations agreed on the sign of $s$. Genes are the
+    annotation at the region's position; parentheses mark a target variant lying
+    outside the named gene. PP$_4$ is the posterior probability that the selection
+    and trait signals share a causal variant.}
     \label{tab:selected_variants}
     \resizebox{\columnwidth}{!}{%
     \begin{tabular}{c r r l l r l r}
@@ -692,7 +721,9 @@ Overall, our scan identified X novel candidate regions under selection that were
         5  & $33.88$–$34.00$   & $14$  & rs16891982 C\textgreater G & SLC45A2       & $+0.0299$ & Skin colour           & $0.99$ \\
         5  & $131.53$–$131.72$ & $11$  & rs273901 T\textgreater G$^\ddagger$ & SLC22A4/5 & $-0.0149$ & \textit{SLC22A4/5} expression & $0.99$ \\
         5  & $147.68$–$147.76$ & $1$   & rs1363707 A\textgreater G  & SPINK7/9      & $-0.0141$ & Pulse pressure        & $0.98$ \\
-        6  & $29.82$–$29.89$   & $6$   & rs3132714 T\textgreater C$^\dagger$  & HLA-F/HLA-G   & $+0.0181$ & \textit{HLA-F} expression & $0.90$ \\
+        6  & $28.21$–$28.36$   & $3$   & rs6912584 T\textgreater C  & (ZKSCAN3/ZSCAN31) & $+0.0221$ & Coeliac disease   & $0.96$ \\
+        6  & $29.82$–$29.89$   & $7$   & rs3132714 T\textgreater C$^\dagger$ & HLA-F/HLA-G & $+0.0177$ & Haemoglobin conc. & $0.89$ \\
+        6  & $32.03$–$32.18$   & $5$   & rs204994 C\textgreater T   & (AGER/PBX2)   & $+0.0257$ & Bioavailable testosterone & $1.00$ \\
         11 & $61.55$–$61.62$   & $2$   & rs174547 C\textgreater T   & FADS1/FADS2   & $+0.0139$ & Cholesterol           & $0.99$ \\
         11 & $71.12$–$71.22$   & $14$  & rs12800438 A\textgreater G & NADSYN1/DHCR7 & $-0.0243$ & Vitamin D             & $0.99$ \\
         12 & $111.24$–$111.69$ & $2$   & rs1034603 A\textgreater G  & CUX2          & $-0.0151$ & Platelet crit         & $0.99$ \\
@@ -703,57 +734,49 @@ Overall, our scan identified X novel candidate regions under selection that were
     \end{tabular}%
     }
     \\[2pt]
-    \footnotesize $^{\dagger}$No ancestral allele call at rs3132714; sign of selection is relative to the alternate allele.
+    \footnotesize $^{\dagger}$No ancestral allele call at rs3132714 (Ensembl reports \texttt{AA=N}); sign of selection is relative to the alternate allele.
+    $^{\ddagger}$Low-confidence ancestral call at rs273901 (Ensembl reports \texttt{AA=t}).
 \end{table}
 
-\begin{table}[htbp]
-    \centering
-    \caption{Regions meeting the detection threshold for which no functional
-    association could be established. Selection coefficients refer to the derived
-    allele, polarised against the Ensembl GRCh37 ancestral reconstruction.
-    ``GWAS'' reports the colocalisation posterior and number of studies tested
-    where associations existed, and ``none'' where no genome-wide significant
-    association was found in any OpenGWAS batch. ``Hapl.'' is the fraction of
-    neighbouring loci with correlated frequency trajectories that are also in
-    linkage disequilibrium ($r^2>0.2$), a measure of whether the signal is
-    carried by a shared haplotype.}
-    \label{tab:no_functional_support}
-    \resizebox{\columnwidth}{!}{%
-    \begin{tabular}{c r r l l r r r l r}
-        \toprule
-        \textbf{Chr} & \textbf{Region (Mb)} & \textbf{Loci} & \textbf{Target variant} &
-        \textbf{Gene} & \textbf{$\hat{s}$} & \textbf{anc.} & \textbf{mod.} &
-        \textbf{GWAS} & \textbf{Hapl.} \\
-        \midrule
-        2  & $37.94$–$38.01$   & $1$ & rs72791933 G\textgreater A  & (CDC42EP3)      & $-0.0099$ & $0.32$ & $0.00$ & none          & $0.00^{\ddagger}$ \\
-        2  & $213.76$–$213.82$ & $1$ & rs10498001 C\textgreater T  & --              & $+0.0141$ & $0.12$ & $0.21$ & $0.00$ (8)    & $0.00$ \\
-        2  & $221.74$–$221.79$ & $1$ & rs830747 A\textgreater G    & --              & $-0.0126$ & $0.22$ & $0.76$ & none          & $0.17$ \\
-        3  & $30.71$–$30.73$   & $1$ & rs3773656 G\textgreater A   & TGFBR2          & $+0.0143$ & $0.75$ & $0.04^{*}$ & none      & $0.00$ \\
-        3  & $56.62$–$56.67$   & $1$ & rs282534 G\textgreater A    & CCDC66          & $+0.0195$ & $0.42$ & $0.91$ & $0.00$ (1)    & n/a \\
-        4  & $190.64$–$190.69$ & $1$ & rs11132751 A\textgreater G  & --              & $-0.0254$ & $0.74$ & $0.03^{*}$ & none      & $0.00$ \\
-        5  & $58.52$–$58.56$   & $1$ & rs66803649 G\textgreater T  & PDE4D           & $+0.0139$ & $0.66$ & $0.01^{*}$ & none      & $0.00$ \\
-        9  & $31.07$–$31.12$   & $1$ & rs10813459 C\textgreater T  & --              & $+0.0157$ & $0.64$ & $0.88$ & none          & $\mathbf{0.71}$ \\
-        9  & $119.56$–$119.63$ & $3$ & rs200274580 T\textgreater C & ASTN2           & $-0.0142$ & $0.60$ & $0.82$ & none          & $\mathbf{0.33}$ \\
-        10 & $55.10$–$55.15$   & $1$ & rs10825008 G\textgreater A  & --              & $+0.0171$ & $0.46$ & $0.71$ & none          & $0.10$ \\
-        11 & $7.96$–$7.98$     & $1$ & rs907203 A\textgreater G    & (OR10A3, NLRP10)& $+0.0159$ & $0.05$ & $0.51$ & none          & $0.00^{\ddagger}$ \\
-        11 & $9.84$–$9.88$     & $2$ & rs2403221 G\textgreater A   & SBF2            & $+0.0201$ & $0.44$ & $0.79$ & $0.29$ (13)   & $0.11$ \\
-        11 & $34.94$–$34.95$   & $1$ & rs2956103 T\textgreater G   & PDHX            & $-0.0105$ & $0.71$ & $0.21$ & none          & $0.17$ \\
-        11 & $105.93$–$105.95$ & $1$ & rs10895900 C\textgreater T  & KBTBD3          & $+0.0234$ & $0.20$ & $0.75$ & none          & n/a \\
-        12 & $78.30$–$78.35$   & $1$ & rs17817928 T\textgreater G  & NAV3            & $-0.0116$ & $0.29$ & $0.10^{*}$ & none      & $0.00^{\ddagger}$ \\
-        12 & $93.06$–$93.10$   & $1$ & rs937754 T\textgreater C    & --              & $-0.0131$ & $0.70$ & $0.92$ & none          & $\mathbf{0.75}$ \\
-        14 & $99.75$–$99.76$   & $1$ & rs5013941 G\textgreater T   & (BCL11B)        & $+0.0159$ & $0.73$ & $0.08^{*}$ & none      & $0.00$ \\
-        16 & $81.62$           & $1$ & rs4503787 C\textgreater A   & CMIP            & $+0.0336$ & $0.06$ & $0.58$ & $0.50$ (26)   & $0.00$ \\
-        \bottomrule
-    \end{tabular}%
-    }
-    \\[3pt]
-    \footnotesize
-    $^{*}$Modern frequency below $0.10$; association testing in the present-day
-    panel had little power at these sites, so absence of a GWAS hit is
-    uninformative. \\
-    $^{\ddagger}$Seven or more neighbouring loci with correlated trajectories,
-    none in linkage disequilibrium — a pattern consistent with a localised
-    technical artefact rather than a sweep.
+\begin{table}[t]
+\centering\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption{Regions under selection without independent functional support.
+\emph{Tested} indicates colocalisation was run against every trait associated
+with the lead variant and no shared causal variant was recovered;
+\emph{no coloc.}\ that no association reached genome-wide significance to test.
+\emph{Corr., no LD} marks regions whose neighbouring loci show correlated
+allele-frequency trajectories while carrying no linkage disequilibrium, which
+\textsc{SweepLink} cannot distinguish from a sweep because its input carries no
+haplotype information. $n$ is the number of variants in the region.}
+\label{tab:unsupported}
+\begin{tabular}{@{}clrlcl>{\raggedright\arraybackslash}p{2.3cm}@{}}
+\toprule
+Chr & Region (Mb) & $n$ & Lead SNP & $s$ & Freq & Status \\
+\midrule
+2  & 37.94--38.01   & 50 & rs72791933  & $-0.0099$ & $0.32\!\to\!0.00$ & Corr., no LD \\
+2  & 213.76--213.82 & 36 & rs10498001  & $+0.0141$ & $0.12\!\to\!0.20$ & Tested, PP4 0.00 \\
+2  & 221.74--221.79 & 18 & rs830747    & $-0.0126$ & $0.22\!\to\!0.76$ & No coloc. \\
+3  & 30.71--30.73   & 21 & rs3773656   & $+0.0143$ & $0.75\!\to\!0.04$ & No coloc. \\
+3  & 56.62--56.67   & 16 & rs282534    & $+0.0195$ & $0.42\!\to\!0.91$ & Tested, PP4 0.00 \\
+4  & 190.64--190.69 & 5  & rs11132751  & $-0.0254$ & $0.74\!\to\!0.03$ & No coloc. \\
+5  & 58.50--58.55   & 25 & rs66803649  & $+0.0164$ & $0.33\!\to\!0.99$ & No GWAS association \\
+5  & 163.50--163.53 & 10 & rs10462943  & $+0.0165$ & $0.29\!\to\!0.56$ & Corrupted $p$-values \\
+5  & 179.22--179.37 & 45 & rs27471     & $+0.0141$ & $0.57\!\to\!0.71$ & No coloc. \\
+6  & 57.45--57.47   & 3  & rs9396343$^{*}$ & $+0.0253$ & $0.35\!\to\!0.78$ & No GWAS association \\
+10 & 55.10--55.15   & 20 & rs10825008  & $+0.0171$ & $0.46\!\to\!0.71$ & No coloc. \\
+11 & 7.96--7.98     & 17 & rs907203    & $+0.0159$ & $0.05\!\to\!0.51$ & Corr., no LD \\
+11 & 9.84--9.88     & 17 & rs2403221   & $+0.0201$ & $0.44\!\to\!0.79$ & Tested, PP4 0.29 \\
+11 & 34.94--34.95   & 26 & rs2956103   & $-0.0105$ & $0.71\!\to\!0.21$ & No coloc. \\
+11 & 105.93--105.95 & 3  & rs10895900  & $+0.0234$ & $0.20\!\to\!0.75$ & No coloc. \\
+12 & 78.30--78.35   & 20 & rs17817928  & $-0.0116$ & $0.29\!\to\!0.10$ & Corr., no LD \\
+12 & 93.06--93.10   & 14 & rs937754    & $-0.0131$ & $0.70\!\to\!0.92$ & No coloc. \\
+14 & 99.75--99.76   & 8  & rs5013941   & $+0.0159$ & $0.73\!\to\!0.08$ & No coloc. \\
+16 & 81.62          & 1  & rs4503787   & $+0.0336$ & $0.06\!\to\!0.58$ & Tested, PP4 0.50 \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\footnotesize $^{*}$Low-confidence ancestral call at rs9396343 (Ensembl reports \texttt{AA=c}); the magnitude of $s$ is unaffected, the sign is not.
 \end{table}
 
 \section{Discussion}

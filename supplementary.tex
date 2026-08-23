@@ -787,6 +787,30 @@ In comparison with other methods, \diplolocus produces highly resolved likelihoo
 However, it must be noted that \diplolocus requires the population size to be known a priori, whereas \SweepLink performs a joint inference of both $N$ and $s$.
 While \ApproxWF demonstrated likelihood shapes similar to---and occasionally steeper than---\SweepLink, it exhibited a significant downward bias under the strong selection ($s=0.05$) scenario.
 
+\section{Benchmarking Against Competitor Single-Locus Tools}
+
+\begin{table}[htbp]
+    \centering
+    \caption{\textbf{Locus-level detection performance.}
+    False-positive rate and true positive rate by true selection coefficient $s$, evaluated per locus (no window-based grouping) at each tool's own best-MCC threshold.
+    \SweepLink attains the highest overall detection power and the highest power at weak and moderate selection ($s=0.01$, $s=0.02$) among all tools, but also by far the highest false-positive rate, reflecting spatially correlated false calls produced by its linkage-aware model rather than a genuine excess of erroneous detections (see main text for the window-based comparison).}
+    \label{tab:no_window}
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{lrr ccccc r}
+        \toprule
+        & & & \multicolumn{5}{c}{True Positive Rate by selection coefficient $s$} & \\
+        \cmidrule(lr){4-8}
+        \textbf{Tool} & \textbf{FPR} & \textbf{Overall TPR} & \textbf{0.01} & \textbf{0.02} & \textbf{0.03} & \textbf{0.04} & \textbf{0.05} & \textbf{MCC} \\
+        \midrule
+        \SweepLink        & 0.052\% & \textbf{81\%} & 14\% & 90\% & 100\% & 100\% & 100\% & 0.838 \\
+        %\SweepLink (1M)   & \textbf{0.001\%} & 76\% & 3\%  & 81\% & 98\%  & 100\% & 100\% & 0.873 \\
+        \ApproxWF         & 0.010\% & 73\% & 3\%  & 63\% & 99\%  & 100\% & 100\% & 0.843 \\
+        \diplolocus       & \textbf{0.004\%} & 75\% & 3\%  & 73\% & 100\% & 100\% & 100\% & \textbf{0.861} \\
+        \bmws             & 0.017\% & 55\% & 0\%  & 7\%  & 70\%  & 97\%  & 100\% & 0.714 \\
+        \bottomrule
+    \end{tabular}%
+    }
+\end{table}
 
 \section{Extended Benchmarking of \SweepLink on Simulated Data}
 \label{sec:supp:sweeplink_benchmarking}
