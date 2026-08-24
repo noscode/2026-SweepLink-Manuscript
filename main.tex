@@ -445,10 +445,10 @@ The middle window of a selected chromosome --- the one containing the true sweep
 Every other window, on any neutral chromosome, is scored as a false positive (FP) if positive and a true negative (TN) otherwise.
 This window-based comparison collapses correlated false positives from a linked block into a single call, ensuring a fair comparison between tools.
 
-\paragraph{Selection Coefficient Accuracy.}
-We further compare the detection sensitivity and estimation accuracy of each tool across strictly neutral sites ($s=0.0$) and five distinct categories of positive selection ($s \in \{0.01, 0.02, 0.03, 0.04, 0.05\}$).
+\paragraph{Detection Power and Selection Coefficient Accuracy.}
+We further compare the detection sensitivity and estimation accuracy of each tool across strictly neutral sites ($s=0.0$) and five distinct categories of positive selection $s \in \{0.01, 0.02, 0.03, 0.04, 0.05\}$.
 Thresholds are chosen so that all methods are aligned to an identical window-based False Positive Rate (FPR) of 0.3\%, corresponding to the baseline error rate achieved by \SweepLink at its optimal threshold.
-For each selection coefficient, we report the detection rate as the rate at which each tool correctly predicts the selection at the corresponding loci regardless of the estimated value. 
+For each selection coefficient, we report the detection rate as the rate at which each tool correctly predicts the selection at the target loci regardless of the estimated value. 
 To compare accuracy for correctly detected selection sweeps, we compare the mean and variance of the estimated selection coefficients ($\hat{s}$) at the true sweep locus.
 To avoid biasing this comparison toward zero, we exclude sweeps misclassified as neutral (false negatives) from this analysis.
 Additionally, we compare the dispersion of $\hat{s}$ for neutral variants
@@ -508,7 +508,7 @@ We therefore report regions together with an individual loci.
 We define a region as a maximal run of consecutive SNPs at which the posterior probability of neutrality is below 0.5, and regard a region as affected by selection when it contains at least one locus that was detected as potentially causal variant for selection using criterion above.
 
 Loci identified as potentially causal variants for selection are carried through a common annotation pipeline.
-Associations were retrieved from OpenGWAS~\citep{elsworth2020opengwas}, which aggregates the NHGRI-EBI GWAS Catalog~\citep{buniello2019}, UK Biobank~\citep{bycroft2018} analyses from the MRC-IEU~\citep{elsworth2019ukb} and Neale laboratory pipelines~\citep{nealelab2018ukb}, and molecular-trait scans including eQTLGen whole-blood \emph{cis}-eQTLs~\citep{vosa2021}.
+Associations were retrieved from OpenGWAS~\citep{elsworth2020}, which aggregates the NHGRI-EBI GWAS Catalog~\citep{buniello2019}, UK Biobank~\citep{bycroft2018} analyses from the MRC-IEU~\citep{elsworth2019ukb} and Neale laboratory pipelines~\citep{nealelab2018ukb}, and molecular-trait scans including eQTLGen whole-blood \emph{cis}-eQTLs~\citep{vosa2021}.
 We queried every batch except FinnGen and BioBank Japan, whose populations differ too much from the British sample in linkage structure.
 Where associations are found we test whether the selection signal and the GWAS signal are consistent with a shared causal variant by approximate Bayes factor colocalisation, reporting the posterior probability of a common causal variant (PP$_4$)~\citep{giambartolomei2014}.
 We apply colocalisation analysis using a 1~Mb window centred on the target variant ($\pm$500~kb) and the prior probabilities $p_1 = p_2 = 10^{-4}$ and $p_{12} = 10^{-5}$.
@@ -560,140 +560,90 @@ Researchers can simply demand maximum statistical certainty to achieve optimal d
 
 \subsection{Sweep Detection Sensitivity and Estimation Accuracy}
 
-Result detection rates for five distinct categories of positive selection ($s \in \{0.01, 0.02, 0.03, 0.04, 0.05\}$) are presented in Figure~\ref{fig:results:tools_comparison}A.
-While all methods successfully identified strong selective sweeps ($s \ge 0.03$), \SweepLink demonstrated vastly superior sensitivity for weak selection.
-For instance, \SweepLink successfully recovered 17\% of the weakest sweeps ($s = 0.01$), whereas single-locus methods (\diplolocus, \ApproxWF) detected only a fraction ($9\%$ and $3\%$ respectively), and \bmws failed to detect any sweeps of this magnitude entirely.
+Detection rates across four tools for five distinct categories of positive selection ($s \in {0.01, 0.02, 0.03, 0.04, 0.05}$) are presented in Figure~\ref{fig:results:tools_comparison}A, and the accuracy of the estimated selection coefficients ($\hat{s}$) for loci passing the matched window-based 0.3\% FPR threshold are presented in Figure~\ref{fig:results:tools_comparison}B.
 
 \begin{figure}[tb]
 \centering
-\includegraphics[width=0.8\textwidth]{figures/master_plots/comparison_master_plot_no1M_with_round2.pdf}
+\includegraphics[width=0.9\textwidth]{figures/master_plots/comparison_master_plot_no1M_with_round2.pdf}
 \caption{\textbf{Performance and estimation accuracy for selection detection tools.}
 \textbf{(A)}~Sweep detection rates across selection coefficients evaluated at a matched window-based False Positive Rate (FPR) of 0.3\% (the empirical FPR of \SweepLink at $1-P \sim 10^{-5}$).
 \SweepLink uniquely retains sensitivity for weak selection ($s=0.01$).
-\textbf{(B)}~Estimated selection coefficients ($\hat{s}$) for loci passing the 0.3\% FPR threshold.
+\textbf{(B)}~Estimated selection coefficients ($\hat{s}$) for loci passing the 0.3\% FPR threshold, including \SweepLink estimates recomputed at the same detected loci with the spatial layer disabled (\SweepLink \texttt{(linkage-off)}) to isolate linkage-pooling's contribution to estimation bias.
 Coloured dashed lines indicate true values.
 Most existing tools overestimate selection magnitude for false positives ($s=0.0$, yellow) and weak sweeps ($s=0.01$, light green).
-In contrast, \SweepLink tightly constrains neutral errors near zero and provides highly accurate estimates for all selection coefficients, including weak selection ($s=0.01$).
+In contrast, \SweepLink tightly constrains neutral errors near zero and provides more accurate estimates for all selection coefficients, including weak selection ($s=0.01$).
 }
 \label{fig:results:tools_comparison}
 \end{figure}
 
-We then compared the accuracy of the estimated selection coefficients ($\hat{s}$) across tools (Figure~\ref{fig:results:tools_comparison}B).
-To avoid biasing our distributions towards neutrality, we restricted this comparison strictly to loci predicted to be under selection, using the same thresholds defined previously (FPR=0.3\%).
-Our results show that \diplolocus and \ApproxWF exhibit extreme variance when generating false positive calls---incorrectly predicting selection coefficients of high magnitude for strictly neutral sites ($s=0.0$).
-This result is visualized by the yellow boxplots in Figure~\ref{fig:results:mcc_plot}B.
-This behavior is expected, as these tools analyze each locus independently and only detect selection when random genetic drift happens to mimic a strong selective sweep.
-While \ApproxWF shows more positive estimations for false positive calls, \diplolocus produce more high negative estimations.
-We note that such estimations can be easily mixed with a true sweeps even for \diplolocus as sometimes polarization error may happen and then the sign of predicted selection will swap making it indistinguishable from the true sweep at $s=0.05$.
-By leveraging regional genomic context, \SweepLink overcomes this limitation, yielding much more narrow confidence interval of estimations for trully neutral variants that is tightly constrained near zero.
+By $s \ge 0.04$, all four tools reach 100\% detection, and by $s=0.03$ three of the four already do (\SweepLink, \diplolocus, and \ApproxWF at 100\%, versus 91\% for \bmws).
+\SweepLink's advantage lies in weaker selection: at $s=0.01$ it recovers 17\% of sweeps, compared to 9\% for \diplolocus, 3\% for \ApproxWF, and 0\% for \bmws.
+At the intermediate $s=0.02$ this gap persists, with \SweepLink detecting 90\% of sweeps against 88\%, 80\%, and 31\%, respectively.
+
+Yellow boxplots on Figure~\ref{fig:results:tools_comparison}B show that \diplolocus and \ApproxWF exhibit extreme variance when generating false positive calls---incorrectly predicting selection coefficients of high magnitude for strictly neutral sites ($s=0.0$).
+This behaviour is expected, as these tools analyse each locus independently and only detect selection when random genetic drift happens to mimic a strong selective sweep.
+The direction of this noise differs between the two: \ApproxWF tends toward more positive estimations for its false positive calls, while \diplolocus produces high negative estimations---estimations that, because of occasional polarization errors flipping their sign, can become indistinguishable from a true sweep at $s=0.04$.
+At the same time, \bmws's window-based approach produces the estimations closest to zero for false positive calls, but only by sacrificing detection power, which is the lowest of all four tools.
+\SweepLink avoids this trade-off entirely: it constrains its false-positive estimates far more tightly than \diplolocus or \ApproxWF, and---unlike \bmws---does so without giving up any detection power for real sweeps.
 
 When comparing estimates for selected variants, competitive methods routinely overestimate weak selective sweeps ($s=0.01$).
 Similar to the high-magnitude estimates for neutral loci, this bias occurs because weak sweeps become significant only when random genetic drift happens to magnify the signal, producing a trajectory that mimics a much stronger sweep (e.g., $s \approx 0.02$).
-In contrast, \SweepLink provided highly accurate and unbiased estimates for weak selection ($s=0.01$).
-For actual stronger selective sweeps ($s \ge 0.02$), single-locus methods successfully and accurately estimated the true selection coefficients, with their median predictions closely tracking the simulated values.
-The median estimates of \SweepLink scaled proportionally with the true selection strength, perfectly preserving the relative ranking of the effect sizes.
-However, those predictions were systematically underestimated for all $s \ge 0.02$.
+In contrast, \SweepLink provides highly accurate and unbiased estimates for weak selection ($s=0.01$).
+For stronger selective sweeps ($s \ge 0.02$), single-locus methods successfully and accurately estimate the true selection coefficients, with their median predictions closely tracking the simulated values.
+The median estimates of \SweepLink scale proportionally with the true selection strength, preserving the relative ranking of effect sizes, although these predictions are systematically underestimated for all $s \ge 0.02$.
 An inspection of the model's likelihood profiles reveals the mechanism driving this conservative bias.
 Although the likelihood surface at the causal locus correctly peaks near the true value, it remains relatively flat around this maximum, a characteristic that becomes more pronounced at higher selection strengths.
-Because the regional genomic model integrates data from linked passenger SNPs---which inherently experience progressively weaker apparent selection due to recombination---this flat likelihood space allows the surrounding context to computationally ``pull down'' the final joint estimate.
+Because a flat likelihood surface carries little information on its own, the joint estimate leans more heavily on the surrounding regional context.
+As that context is built from linked passenger SNPs---which inherently experience progressively weaker selection due to recombination---this context pulls the final joint estimate downward.
 
-Crucially, further investigation revealed that the magnitude and direction of this bias depend heavily on the causal allele's frequency at the start of the sampling period (Figure~\ref*{fig:supp:performance:start_freq}).
-The systematic underestimation observed previously is characteristic of our primary dataset's parameters, where sampling was initiated only after the causal variant's frequency exceeded $0.3$.
-However, as this initial sampling frequency increases---which corresponds to capturing an older causal variant with a different genomic background---the selection estimates consistently shift upwards.
-Consequently, when observing sweeps that are already at higher standing frequencies, the model overcomes its initial conservative bias and eventually begins to overestimate the selection coefficient.
+To directly test this mechanism, we re-estimated selection coefficients using \SweepLink with its spatial layer disabled, isolating each locus from its linked neighbours (population size again fixed to $N=10{,}000$).
+We restricted this to the loci already identified as under selection in the original run, and---since re-estimating only this small subset is computationally far cheaper---used a finer grid of $G=100$ points.
+These results, shown as \SweepLink~\texttt{(linkage off)} in Figure~\ref{fig:results:tools_comparison}B, shift upward and move closer to the true simulated values, confirming that the linked passenger SNPs pooled by the regional model are indeed responsible for driving the joint estimate downward.
+The same mechanism affects false positive calls ($s=0.0$), but here it manifests as an increased variation of the selection magnitude that widen the yellow boxplot around zero---yet even with this added spread, \SweepLink's false-positive estimates remain lower than those of \diplolocus and \ApproxWF.
 
-To comprehensively evaluate the performance of \SweepLink's joint inference framework, we systematically assessed its accuracy and robustness across a diverse array of evolutionary scenarios and study designs.
+\subsection{Robustness}
+We evaluated how the accuracy of \SweepLink inference depends on several experimental characteristics: sample size, number of time points, sequence length, binning strategy, initial frequency of the selected allele, recombination rate, and the numerical grid size used for the diffusion approximation.
+The MCC plots for each experiment are presented in Supplementary Figure~\ref{fig:supp:power_analysis}.
+The result plots for detection power across selection coefficients, accuracy of selection estimations and posterior distributions for the population size are shown in Figure~\ref{fig:performance:sample_size} Supplementary Figures~S7--S12. %\ref{fig:supp:performance:sample_size,fig:supp:performance:tploints_num,fig:supp:performance:n_loci,fig:supp:performance:binning,fig:supp:performance:start_freq,fig:supp:performance:rec_rate, fig:supp:performance:n_grid}.
+
+\begin{figure}[b!]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/master_plots/sample_size_master_plot.pdf}
+\caption{}
+\label{fig:performance:sample_size}
+\end{figure}
+
+In our default configuration, \SweepLink detects selection in 20\% of cases for weak selection ($s=0.01$), 81\% for moderate selection ($s=0.02$), and 100\% for strong selection ($s=0.05$), with an average false positive rate of 0.09\%.
+The population size posterior has high variance due to the flat shape of the likelihood, but still recovers the correct value of $N=10{,}000$.
+
+As expected, both detection power and the accuracy of selection and population size estimates increase with larger sample sizes and more time points.
+Chromosome length does not affect selection-inference accuracy, but longer sequences yield more concentrated population size posteriors.
+
+\SweepLink shows minimal sensitivity to binning: detection power and population size accuracy remain stable across bin sizes, though confidence intervals for population size widen as bins grow coarser, and at the coarsest binning tested (bin size 80, yielding only two bins and three time points) \SweepLink consistently fails to recover the correct population size.
+
+The initial frequency of the derived allele strongly affects detection power, which rises as this frequency increases toward 0.2--0.3 and then declines again at higher frequencies (0.8--0.9); mean population-size estimates decrease correspondingly, reflecting the longer history of selection already acting on the allele by the time sampling begins.
+
+As expected from \SweepLink's use of linkage information, selection inference improves as the recombination rate decreases from $10^{-5}$ to $10^{-10}$.
+Finally, increasing the resolution of the numerical grid in the Wright-Fisher diffusion scheme improves \SweepLink's power to detect selection.
 
 
+\subsection{Selection scan of the British ancient-DNA time series}
 
-\subsection{Validation on Simulated Data}
-We evaluated how the accuracy of SweepLink inference depends on various experimental characteristics, including sample size, number of time points, sequence length, binning strategy, initial frequency of the selected allele, recombination rate, and the numerical grid size used for diffusion approximation.
-To ensure a systematic comparison, we establish a default configuration for our simulations and then vary one characteristic at a time, keeping all other parameters fixed at their default values.
+In the ancient British data, we discovered more regions affected by selection than the previous scan performed using \bmws~\citep{mathieson2022}.
+Effective population size, inferred jointly with the per-locus selection coefficients, ranged from $N = 6{,}023$ to $14{,}148$ across autosomes --- consistent with published estimates for European populations over this period.
+The scan identified NN peaks containing NN loci meeting the detection criterion, of which NN reached colocalisation support at PP$_4 > 0.8$ (Table~\ref{tab:selected_variants}); the remainder are reported in Table~\ref{tab:unsupported}.
 
-In each simulation, there are six simulated chromosomes  of the same length: three chromosomes containing only neutral variants, and three chromosomes, each with one causal variant under positive selection with selection coefficients of 0.01, 0.02, or 0.05.
-For each experimental setup, simulation and subsequent inference were repeated 100 times.
-
-For each value of the characteristic being varied, we report the power of \SweepLink to predict selection and the corresponding AUC scores.
-Power is measured as the percentage of runs in which the posterior probability of selection for a variant exceeds 99\%.
-We report AUC scores for each selection coefficient to provide a comprehensive measure that accounts for both true and false predictions of selection.
-We also report the posterior distributions of the estimated selection coefficients and population size for each experiment.
-
-In case of default configuration, SweepLink is able to detect selection in 40\% of cases for a selection coefficient of 0.01, in 96\% of cases for 0.02, and in 100\% of cases for 0.05.
-On average, the method has a false positive rate of 2.3\%, meaning that it predicts selection for 2.3\% of neutral variants.
-Generally, sweepLink has a tendency to underestimate selection coefficients and population size.
-The lower estimation of population size is connected to high percentage (50\%) of data affected by selection.
-
-The power to detect selection at causal variants, as well as AUC scores, increases with larger sample sizes.
-SweepLink is unable to accurately estimate population size with small sample sizes (5 and 10 diploid individuals), but estimation improves substantially with larger samples, reaching the highest accuracy at 500 diploid samples per time point.
-When estimating the selection coefficient on a grid, the posterior credible interval becomes narrower as the sample size increases.
-
-A similar pattern is observed for the number of time points: both selection and population size inference accuracy with SweepLink improve as more time points are included.
-
-Chromosome length does not affect the accuracy of selection inference, but longer sequences yield more concentrated posterior distributions for population size.
-Notably, population size tends to be underestimated.
-While estimation improves with increasing sequence length, the maximum length tested was insufficient to consistently recover the true population size.
-
-SweepLink shows minimal sensitivity to binning.
-The power to detect selection and resulting AUC scores remain relatively stable across bin sizes, with only small fluctuations.
-However, confidence intervals for population size estimation increase with bin size.
-For the largest binning tested (bin size 80, resulting in two bins and three time points), SweepLink consistently fails to estimate the correct population size.
-
-The initial frequency of the derived allele strongly influences SweepLink’s power to detect selection.
-Detection increases as derived allele frequency rises to 0.2–0.3, but power declines again at higher frequencies (0.8–0.9), producing a characteristic increase and decrease in detection power.
-Meanwhile, mean population size estimates decrease as initial derived allele frequency increases, reflecting the prolonged action of selection and its effect on population size inference.
-
-SweepLink leverages linkage information to improve selection inference, which is expected to be more effective under lower recombination rates.
-As observed, selection inference improves as the recombination rate decreases from $10^{-5}$ to $10^{-8}$.
-However, at an extremely low rate ($10^{-9}$) and short chromosome length (0.1 Mb), power to detect selection declines, likely due to excessive linkage.
-
-Finally, increasing the resolution of the numerical grid in the Wright-Fisher diffusion scheme enhances SweepLink’s power to detect selection.
-However, population size estimation remains inaccurate across all grid sizes tested, with the highest uncertainty observed at 100 grid points.
-Importantly, selection is still inferred accurately, even when population size estimation is unreliable.
-
-\subsection{Selection in British population}
-We identified Y significant peaks of directed selection.
-To understand the functional context of these signals, we mapped each focal SNP to nearby genes and assessed whether it overlaps with known regulatory elements, such as enhancers or promoters.
-Furthermore to investigate the phenotypic targets of selection, we queried each focal SNP against UK Biobank GWAS summary statistics (Neale lab)~\citep{nealelab2018} via the OpenGWAS platform~\citep{elsworth2020}.
-We then performed colocalization analysis between the predicted selection magnitudes and GWAS $p$-values within a 1 Mb window around each SNP.
-Using this approach, we successfully identified a putative trait driving the selection signal for most of these regions (X out of Y peaks).
-To explore the genomic architecture of these mapped regions, we examined their local selection profiles and GWAS association tracks alongside population-matched recombination map from the 1000 Genomes Project (GBR population) \citep{1000G2015}.
-As illustrated in Figures~\ref{fig:X}-\ref{fig:Y}, this landscape analysis revealed a consistent pattern: the majority of our identified selection peaks are situated within recombination coldspots.
-Additionally, the selection footprint inferred at the \textit{LCT} locus---a well-known target of selection for lactase persistence---aligns almost perfectly with the European LD block defined by LDetect \citep{berisa2015} (Figure~\ref{fig:results:brits_2chr_lct_region}).
 \begin{figure}[tb]
 \centering
     \includegraphics[width=\textwidth]{figures/real_data_results/manhattan_manuscript.png}
     \caption{
     \textbf{Genome-wide scan for signals of directed selection in Britain.}
-    The y-axis reflects the posterior one-sided probability of selection ($P = \max(P(s>0), P(s<0))$), with the red dashed line representing the peak model confidence threshold ($P=1.0$).
+    The y-axis reflects the posterior one-sided probability of selection ($P = \max(P(s>0), P(s<0))$), with the red dashed line representing the peak model confidence threshold ($1-P\sim10^{-5}$).
     Top-scoring variants within notable genomic regions are annotated with their respective candidate genes.
-    Five prominent peaks with intergenic variants (chromosome 4, 9, 10, 11 and 14) reaching the significance threshold remain unannotated due to a lack of identifiable candidate genes or established GWAS associations at those loci.
+    Other prominent peaks with intergenic variants remain unannotated due to a lack of identifiable candidate genes or established GWAS associations at those loci.
     }
     \label{fig:results:brits_manhattan_plot}
 \end{figure}
-
-\begin{figure}[tb]
-\centering
-    \includegraphics[width=\textwidth]{figures/real_data_results/region_plots/plot_sel_chr2_rs4988235.pdf}
-    \caption{
-    \textbf{Genomic landscape of the selection signal at the \textit{LCT} locus on chromosome 2.}
-    (A) Predicted selection magnitudes generated by \SweepLink.
-    Red points indicate variants classified as target variants under selection ($P=1.0$), while gray points represent neutral variants.
-    The known causal variant for lactase persistence, rs4988235, is marked by a vertical dotted line.
-    The shaded background bounded by dashed vertical lines represents the European linkage disequilibrium (LD) block derived from the LDetect database.
-    (B) Local Manhattan plot of GWAS summary statistics from the UK Biobank (Neale lab) for the trait "Milk type used: Never/rarely have milk" (\mbox{OpenGWAS~ID:~ukb-d-1418\_6}).
-    This trait colocalizes with predicted selection signal (colocalization probability = 0.99). The horizontal dashed line denotes the standard genome-wide significance threshold ($p=5 \times 10^{-8}$).
-    (C) Cumulative recombination landscape (cM) based on the 1000 Genomes Project genetic map for the GBR population.
-    }
-    \label{fig:results:brits_2chr_lct_region}
-\end{figure}
-
-We compared the results of \SweepLink to a previous selection scan conducted on the same dataset \citep{mathieson2022}.
-\SweepLink confirmed three of the seven primary regions previously reported to be under selection: \textit{LCT} (chromosome 2), \textit{DHCR7} (chromosome 22), and \textit{HERC2} (chromosome 15).
-Conversely, our results do not support the previously predicted selection signal at the \textit{SLC45A2} locus on chromosome 5, yielding a minimum posterior probability of neutrality of 0.2 in this region.
-Within the MHC region, \SweepLink detected a single peak localized to the \textit{HCP5B} gene, in contrast to the three distinct regions reported by \citet{mathieson2022}.
-Additionally, \SweepLink showed no signs of selection in two regions on chromosomes 4 and 12 that were previously flagged as false positives \citep{mathieson2022}. % TODO: double check for chrom 12!
-Overall, our scan identified X novel candidate regions under selection that were not detected in the previous analysis.
-
 
 \begin{table}[htbp]
     \centering
@@ -721,9 +671,10 @@ Overall, our scan identified X novel candidate regions under selection that were
         5  & $33.88$–$34.00$   & $14$  & rs16891982 C\textgreater G & SLC45A2       & $+0.0299$ & Skin colour           & $0.99$ \\
         5  & $131.53$–$131.72$ & $11$  & rs273901 T\textgreater G$^\ddagger$ & SLC22A4/5 & $-0.0149$ & \textit{SLC22A4/5} expression & $0.99$ \\
         5  & $147.68$–$147.76$ & $1$   & rs1363707 A\textgreater G  & SPINK7/9      & $-0.0141$ & Pulse pressure        & $0.98$ \\
-        6  & $28.21$–$28.36$   & $3$   & rs6912584 T\textgreater C  & (ZKSCAN3/ZSCAN31) & $+0.0221$ & Coeliac disease   & $0.96$ \\
+         6  & $28.21$–$28.36$   & $3$   & rs6912584 T\textgreater C  & (ZKSCAN3/ZSCAN31) & $+0.0221$ & Coeliac disease   & $0.96$ \\
         6  & $29.82$–$29.89$   & $7$   & rs3132714 T\textgreater C$^\dagger$ & HLA-F/HLA-G & $+0.0177$ & Haemoglobin conc. & $0.89$ \\
         6  & $32.03$–$32.18$   & $5$   & rs204994 C\textgreater T   & (AGER/PBX2)   & $+0.0257$ & Bioavailable testosterone & $1.00$ \\
+        10 & $99.39$–$99.42$   & $2$   & rs7920031 C\textgreater T  & MORN4/PI4K2A  & $+0.0166$ & \textit{MORN4} expression & $0.97$ \\
         11 & $61.55$–$61.62$   & $2$   & rs174547 C\textgreater T   & FADS1/FADS2   & $+0.0139$ & Cholesterol           & $0.99$ \\
         11 & $71.12$–$71.22$   & $14$  & rs12800438 A\textgreater G & NADSYN1/DHCR7 & $-0.0243$ & Vitamin D             & $0.99$ \\
         12 & $111.24$–$111.69$ & $2$   & rs1034603 A\textgreater G  & CUX2          & $-0.0151$ & Platelet crit         & $0.99$ \\
@@ -739,62 +690,131 @@ Overall, our scan identified X novel candidate regions under selection that were
 \end{table}
 
 \begin{table}[t]
-\centering\footnotesize
-\setlength{\tabcolsep}{3pt}
-\caption{Regions under selection without independent functional support.
-\emph{Tested} indicates colocalisation was run against every trait associated
-with the lead variant and no shared causal variant was recovered;
-\emph{no coloc.}\ that no association reached genome-wide significance to test.
-\emph{Corr., no LD} marks regions whose neighbouring loci show correlated
-allele-frequency trajectories while carrying no linkage disequilibrium, which
-\textsc{SweepLink} cannot distinguish from a sweep because its input carries no
-haplotype information. $n$ is the number of variants in the region.}
-\label{tab:unsupported}
-\begin{tabular}{@{}clrlcl>{\raggedright\arraybackslash}p{2.3cm}@{}}
-\toprule
-Chr & Region (Mb) & $n$ & Lead SNP & $s$ & Freq & Status \\
-\midrule
-2  & 37.94--38.01   & 50 & rs72791933  & $-0.0099$ & $0.32\!\to\!0.00$ & Corr., no LD \\
-2  & 213.76--213.82 & 36 & rs10498001  & $+0.0141$ & $0.12\!\to\!0.20$ & Tested, PP4 0.00 \\
-2  & 221.74--221.79 & 18 & rs830747    & $-0.0126$ & $0.22\!\to\!0.76$ & No coloc. \\
-3  & 30.71--30.73   & 21 & rs3773656   & $+0.0143$ & $0.75\!\to\!0.04$ & No coloc. \\
-3  & 56.62--56.67   & 16 & rs282534    & $+0.0195$ & $0.42\!\to\!0.91$ & Tested, PP4 0.00 \\
-4  & 190.64--190.69 & 5  & rs11132751  & $-0.0254$ & $0.74\!\to\!0.03$ & No coloc. \\
-5  & 58.50--58.55   & 25 & rs66803649  & $+0.0164$ & $0.33\!\to\!0.99$ & No GWAS association \\
-5  & 163.50--163.53 & 10 & rs10462943  & $+0.0165$ & $0.29\!\to\!0.56$ & Corrupted $p$-values \\
-5  & 179.22--179.37 & 45 & rs27471     & $+0.0141$ & $0.57\!\to\!0.71$ & No coloc. \\
-6  & 57.45--57.47   & 3  & rs9396343$^{*}$ & $+0.0253$ & $0.35\!\to\!0.78$ & No GWAS association \\
-10 & 55.10--55.15   & 20 & rs10825008  & $+0.0171$ & $0.46\!\to\!0.71$ & No coloc. \\
-11 & 7.96--7.98     & 17 & rs907203    & $+0.0159$ & $0.05\!\to\!0.51$ & Corr., no LD \\
-11 & 9.84--9.88     & 17 & rs2403221   & $+0.0201$ & $0.44\!\to\!0.79$ & Tested, PP4 0.29 \\
-11 & 34.94--34.95   & 26 & rs2956103   & $-0.0105$ & $0.71\!\to\!0.21$ & No coloc. \\
-11 & 105.93--105.95 & 3  & rs10895900  & $+0.0234$ & $0.20\!\to\!0.75$ & No coloc. \\
-12 & 78.30--78.35   & 20 & rs17817928  & $-0.0116$ & $0.29\!\to\!0.10$ & Corr., no LD \\
-12 & 93.06--93.10   & 14 & rs937754    & $-0.0131$ & $0.70\!\to\!0.92$ & No coloc. \\
-14 & 99.75--99.76   & 8  & rs5013941   & $+0.0159$ & $0.73\!\to\!0.08$ & No coloc. \\
-16 & 81.62          & 1  & rs4503787   & $+0.0336$ & $0.06\!\to\!0.58$ & Tested, PP4 0.50 \\
-\bottomrule
-\end{tabular}
-\\[2pt]
-\footnotesize $^{*}$Low-confidence ancestral call at rs9396343 (Ensembl reports \texttt{AA=c}); the magnitude of $s$ is unaffected, the sign is not.
+    \centering\footnotesize
+    \setlength{\tabcolsep}{3pt}
+    \caption{Regions under selection without independent functional support.
+    \emph{Tested} indicates colocalisation was run against every trait associated
+    with the lead variant and no shared causal variant was recovered;
+    \emph{no assoc.}\ that no association reached genome-wide significance to test.
+    \emph{Corrupted $p$} marks a region whose only associated study reports
+    $p$-values that are not measurements. $n$ is the number of variants in the region.}
+    \label{tab:unsupported}
+    \begin{tabular}{@{}clrlcl>{\raggedright\arraybackslash}p{2.3cm}@{}}
+    \toprule
+    Chr & Region (Mb) & $n$ & Lead SNP & $s$ & Freq & Status \\
+    \midrule
+    2  & 37.94--38.01   & 50 & rs72791933  & $-0.0099$ & $0.32\!\to\!0.00$ & No assoc. \\
+    2  & 213.76--213.82 & 36 & rs10498001  & $+0.0141$ & $0.12\!\to\!0.20$ & Tested, PP4 0.00 \\
+    2  & 221.74--221.79 & 18 & rs830747    & $-0.0126$ & $0.22\!\to\!0.76$ & No assoc. \\
+    3  & 30.71--30.73   & 14 & rs3773656   & $+0.0193$ & $0.24\!\to\!0.96$ & No assoc. \\
+    3  & 155.39--155.41 & 12 & rs358899    & $+0.0184$ & $0.77\!\to\!0.92$ & Tested, PP4 0.00 \\
+    3  & 159.60--159.61 & 6  & rs3773785   & $+0.0175$ & $0.14\!\to\!0.32$ & Tested, PP4 0.00 \\
+    3  & 184.38--184.41 & 18 & rs7653781   & $+0.0155$ & $0.91\!\to\!0.95$ & Tested, PP4 0.00 \\
+    4  & 3.57--3.65     & 17 & rs73081157  & $-0.0289$ & $0.51\!\to\!0.00$ & No assoc. \\
+    4  & 190.64--190.69 & 4  & rs11132751  & $-0.0229$ & $0.73\!\to\!0.03$ & No assoc. \\
+    5  & 58.50--58.55   & 25 & rs66803649  & $+0.0164$ & $0.33\!\to\!0.99$ & No assoc. \\
+    5  & 163.50--163.53 & 10 & rs10462943  & $+0.0165$ & $0.29\!\to\!0.56$ & Corrupted $p$ \\
+    5  & 179.22--179.37 & 45 & rs27471     & $+0.0141$ & $0.57\!\to\!0.71$ & No assoc. \\
+    6  & 57.45--57.47   & 3  & rs9396343$^{*}$ & $+0.0253$ & $0.35\!\to\!0.78$ & No assoc. \\
+    10 & 16.23--16.27   & 13 & rs4748263   & $+0.0147$ & $0.24\!\to\!0.56$ & No assoc. \\
+    10 & 67.78--67.79   & 13 & rs6480128   & $-0.0102$ & $0.78\!\to\!0.24$ & No assoc. \\
+    10 & 100.93--100.96 & 5  & rs6584238   & $+0.0159$ & $0.18\!\to\!0.63$ & No assoc. \\
+    10 & 113.30--113.42 & 58 & rs11593093  & $+0.0126$ & $0.24\!\to\!0.52$ & No assoc. \\
+    10 & 133.96--134.04 & 23 & rs1038804   & $+0.0137$ & $0.20\!\to\!0.55$ & Tested, PP4 0.67 \\
+    11 & 7.96--7.98     & 17 & rs907203    & $+0.0159$ & $0.05\!\to\!0.51$ & No assoc. \\
+    11 & 9.84--9.88     & 17 & rs2403221   & $+0.0201$ & $0.44\!\to\!0.79$ & Tested, PP4 0.29 \\
+    11 & 34.94--34.95   & 26 & rs2956103   & $-0.0105$ & $0.71\!\to\!0.21$ & No assoc. \\
+    11 & 105.93--105.95 & 3  & rs10895900  & $+0.0234$ & $0.20\!\to\!0.75$ & No assoc. \\
+    12 & 78.30--78.35   & 20 & rs17817928  & $-0.0116$ & $0.29\!\to\!0.10$ & No assoc. \\
+    12 & 93.06--93.10   & 14 & rs937754    & $-0.0131$ & $0.70\!\to\!0.92$ & No assoc. \\
+    14 & 99.75--99.76   & 8  & rs5013941   & $+0.0159$ & $0.73\!\to\!0.08$ & No assoc. \\
+    16 & 81.62          & 1  & rs4503787   & $+0.0336$ & $0.06\!\to\!0.58$ & Tested, PP4 0.50 \\
+    \bottomrule
+    \end{tabular}
+    \\[2pt]
+    \footnotesize $^{*}$Low-confidence ancestral call at rs9396343 (Ensembl reports \texttt{AA=c}); the magnitude of $s$ is unaffected, the sign is not.
 \end{table}
+
+The scan recovers the canonical targets of recent European selection without them having been specified in advance.
+Lactase persistence at \textit{LCT}/\textit{MCM6} is the strongest signal in the genome, with 177 loci reaching the detection criterion across 1.9~Mb and a colocalisation with milk consumption at PP$_4 = 0.99$.
+The two major pigmentation loci are both recovered: \textit{SLC45A2} ($\hat{s} = +0.0310$, skin colour, PP$_4 = 0.99$) and
+\textit{HERC2} ($\hat{s} = +0.0227$, skin colour, PP$_4 = 0.94$).
+So are the fatty acid desaturase cluster \textit{FADS1}/\textit{FADS2} (cholesterol,
+PP$_4 = 0.99$), the vitamin~D pathway at \textit{NADSYN1}/\textit{DHCR7} (PP$_4 = 0.99$), and the antiviral \textit{OAS1} locus, whose lead variant is a splice-acceptor change colocalising with OAS1 protein levels at PP$_4 = 0.99$.
+That six independently established sweeps emerge from an unsupervised scan provides the positive control for everything that follows.
+The extended MHC on chromosome~6 contributes three further regions,
+colocalising respectively with coeliac disease (PP$_4 = 0.96$), haemoglobin
+concentration (PP$_4 = 0.89$) and bioavailable testosterone (PP$_4 = 1.00$).
+
+To explore the linkage structure of identified regions, we examined their local selection profiles and GWAS association tracks alongside population-matched recombination map from the 1000 Genomes Project (GBR population) \citep{1000G2015}.
+As illustrated in Figures~\ref{fig:X}-\ref{fig:Y}, this landscape analysis revealed a consistent pattern: the majority of our identified selection peaks are situated within recombination coldspots.
+Additionally, the selection footprint inferred at the \textit{LCT} locus---a well-known target of selection for lactase persistence---aligns almost perfectly with the European LD block defined by LDetect \citep{berisa2015} (Figure~\ref{fig:results:brits_2chr_lct_region}).
+
+\begin{figure}[tb]
+\centering
+    \includegraphics[width=\textwidth]{figures/real_data_results/region_plots/plot_sel_chr2_rs4988235.pdf}
+    \caption{
+    \textbf{Genomic landscape of the selection signal at the \textit{LCT} locus on chromosome 2.}
+    (A) Predicted selection magnitudes generated by \SweepLink.
+    Red points indicate variants classified as target variants under selection ($P=1.0$), while gray points represent neutral variants.
+    The known causal variant for lactase persistence, rs4988235, is marked by a vertical dotted line.
+    The shaded background bounded by dashed vertical lines represents the European linkage disequilibrium (LD) block derived from the LDetect database.
+    (B) Local Manhattan plot of GWAS summary statistics from the UK Biobank (Neale lab) for the trait "Milk type used: Never/rarely have milk" (\mbox{OpenGWAS~ID:~ukb-d-1418\_6}).
+    This trait colocalizes with predicted selection signal (colocalization probability = 0.99). The horizontal dashed line denotes the standard genome-wide significance threshold ($p=5 \times 10^{-8}$).
+    (C) Cumulative recombination landscape (cM) based on the 1000 Genomes Project genetic map for the GBR population.
+    }
+    \label{fig:results:brits_2chr_lct_region}
+\end{figure}
+
+We compared the results of \SweepLink to a previous selection scan conducted on the same dataset \citep{mathieson2022}.
+\SweepLink confirmed three of the seven primary regions previously reported to be under selection: \textit{LCT} (chromosome 2), \textit{DHCR7} (chromosome 22), and \textit{HERC2} (chromosome 15).
+Conversely, our results do not support the previously predicted selection signal at the \textit{SLC45A2} locus on chromosome 5, yielding a minimum posterior probability of neutrality of 0.2 in this region.
+Within the MHC region, \SweepLink detected a single peak localized to the \textit{HCP5B} gene, in contrast to the three distinct regions reported by \citet{mathieson2022}.
+Additionally, \SweepLink showed no signs of selection in two regions on chromosomes 4 and 12 that were previously flagged as false positives \citep{mathieson2022}. % TODO: double check for chrom 12!
+Overall, our scan identified X novel candidate regions under selection that were not detected in the previous analysis.
+
+
+
 
 \section{Discussion}
 
-\SweepLink is the first tool for the joint estimate of demography and linked selection from genome-wide time-series data.
-Correlations between nearby loci, that \SweepLink captures, allows it to pull evidence of selection to improve detection power for weak selection compared to other existing single-locus methods.
-At the same time isolated loci that happen to mimic selection sweep due to genetic drift are pushed to neutrality as they are not supported by their background.
+\SweepLink is the first tool for the joint estimation of demography and linked selection from genome-wide time-series data.
+The correlations between nearby loci that \SweepLink captures allow it to pool evidence of selection, improving detection power for weak selection compared to existing single-locus methods.
+At the same time, isolated loci that happen to mimic a selection sweep due to genetic drift are pushed toward neutrality, as they are not supported by their genomic background.
+When drift happens to affect several linked loci simultaneously, however, this same pooling can instead produce a cluster of correlated false-positive calls, so that counted locus by locus, \SweepLink appears to make more false-positive calls than existing tools.
+These calls remain low in estimated magnitude, and because they cluster within a single linked block rather than arising independently, scoring them at the level of genomic windows---collapsing each cluster into a single call---removes this bias and shows \SweepLink to be superior to existing single-locus tools.
+
+This same architecture is what allows \SweepLink to overcome the scalability limitations of the multi-locus approaches discussed above.
+Unlike the pairwise model of \citep{he2020}, \SweepLink's spatial layer extends across an arbitrary number of linked loci.
+Unlike the Gaussian-process approach of \citet{terhorst2015}, whose quadratic runtime confines joint inference to small local windows, \SweepLink's nearest-neighbor transition structure was designed for genome-wide use.
+We did not benchmark runtime directly against these tools, but we demonstrate this practicality empirically: \SweepLink was applied to genome-scale, chromosome-wide time-series data across the British population dataset, rather than to simulated benchmarks alone.
+\SweepLink likewise avoids the ARG-inference bottleneck of \CLUES~\citep{vaughn2024} and the reliance on extensive forward-in-time simulation of \timesweeper~\citep{whitehouse2023}, since its likelihood is computed directly from the underlying Wright-Fisher diffusion rather than from reconstructed genealogies or simulation-trained classifiers.
+\SweepLink further jointly infers the effective population size alongside selection, a capability shared by few existing tools and particularly useful for populations or species whose demographic history is not already well characterized.
 
 Our experiments demonstrated that \SweepLink is more sensitive to weak and moderate selection than other tools, while its detection power for strong selection is the same.
-When sweeplink is able to capture the correlation between loci then it produce highly polarized posteriors, that lead to best performance on the high stringency.
-Compared to other existing methods this provides an advantage on practice: while other tool require an empirical threshold to separate neutral loci from selected and highly depend on this choice, \SweepLink provides best estimates on its highest stringency level.
-This eliminates the dependency on the threshold.
-When \SweepLink fails to estimate the correlation structure along the genome, then it converges to the behaviour of single-loci tools.
+When \SweepLink is able to capture the correlation between loci, it produces highly polarized posteriors that lead to the best performance at high stringency.
+Compared to other existing methods, this provides a practical advantage: other tools require an empirical threshold to separate neutral loci from selected ones and are highly dependent on this choice, whereas \SweepLink provides its best estimates at its highest stringency level.
+This eliminates dependence on threshold choice.
+When \SweepLink fails to capture the correlation structure along the genome, it converges to the behaviour of single-locus tools and again requires threshold selection.
 
-Our experiments on simulated data 
+Our experiments on simulated data demonstrated the robustness of \SweepLink's performance across diverse evolutionary scenarios. 
+Its accuracy and detection power grow with sample size, number of time points, and number of loci, while binning strategy has no significant effect on performance.
+Experiments with the recombination rate showed that, for a fixed mutation rate of $\mu=10^{-8}$, \SweepLink is capable of capturing the linkage structure for any recombination rate $r \leq 10^{-7}$.
 
-% our best filtering kind of make sense because our model does not account for allele to be lost
+Several limitations of the current model are worth noting.
+The spatial layer captures correlations only between neighboring loci through a first-order Markov structure, rather than the full joint covariance across many linked loci, this trade-off is what makes genome-wide inference computationally tractable, but it also means \SweepLink cannot represent longer-range linkage patterns that a richer, higher-order model might capture.
+\SweepLink additionally assumes a hard, single-origin sweep at each selected locus, and its performance on soft sweeps or on polygenic adaptation acting on standing variation across many loci remains untested.
+Finally, as our recombination rate experiments show, \SweepLink's advantage over single-locus methods narrows once the recombination rate exceeds this range: as linkage disequilibrium decays too quickly to leave a detectable physical footprint around the causal variant, \SweepLink converges to single-locus behaviour and its advantage over existing tools disappears.
 
+The cost of the linkage correlation captured by \SweepLink is reflected in the accuracy of its selection estimates: they are mostly underestimated for $s\geq 0.02$.
+This can be corrected with an additional \SweepLink run with the spatial (linkage) layer disabled.
+The original \SweepLink run detects the loci under selection and uses all of the tool's features, such as population size estimation, high detection power, and low false-positive estimates.
+Once this run is complete, the estimated population size is fixed, and \SweepLink is rerun with a finer grid on the subset of detected loci.
+This pipeline yields accurate estimates for $s\geq 0.02$ across most of our experiments.
+However, we note that for empirical datasets we recommend reporting both values, since some loci-specific selection estimates may show artificially high magnitudes due to data-preparation issues, such as mapping quality or the exclusion of certain regions.
+
+
+% if looking just at neutral loci wrongle detected as selected, there more of them for sweepLink, but that is because of the linkage and selection there is still low.
 
 \bibliography{sample}
 
